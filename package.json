@@ -7,8 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Dario Biagio Bellino",
+  "license": "MIT",
   "type": "module",
   "devDependencies": {
     "typescript": "^5.9.3",
