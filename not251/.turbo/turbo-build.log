@@ -1,0 +1,8 @@
+[2J[m[H]0;C:\WINDOWS\system32\cmd.exe [?25h[?25l
+> @not251/not251@0.0.2 build D:\Git\not251-ts\packages\not251
+> rollup -c rollup.config.js[5;1H[?25h[36m[1m
+src/index.ts[22m → [1mdist/index.js, dist/index.esm.js[22m...
+[m[33m[1m(!) Circular dependency
+[msrc/scale.ts -> src/crossOperation.ts -> src/scale.ts[32m
+created [1mdist/index.js, dist/index.esm.js[22m in [1m3.5s
+[m
