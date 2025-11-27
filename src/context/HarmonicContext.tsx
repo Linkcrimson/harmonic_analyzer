@@ -24,6 +24,9 @@ interface HarmonicState {
     playCurrentChord: () => void;
     reset: () => void;
     selectChordOption: (index: number) => void;
+    midiConnected: boolean;
+    midiInputs: string[];
+    sustainPedal: boolean;
 }
 
 const HarmonicContext = createContext<HarmonicState | null>(null);
@@ -51,7 +54,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         noteNames: new Map()
     });
 
-    const { initAudio, playTone, getFrequency } = useAudio();
+    const { initAudio, startNote, stopNote, playTone, getFrequency } = useAudio();
 
     // Analysis Logic (Ported from main.ts)
     const analyze = useCallback((notes: Set<number>, selectedIndex: number = 0) => {
@@ -99,7 +102,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // 3. Detailed Analysis based on selection
         if (options.length > 0 && options[selectedIndex]) {
             const selected = options[selectedIndex];
-            const { root, components, detailedAnalysis, intervals: intervalTypes } = selected;
+            const { root, components, detailedAnalysis } = selected;
 
             // Recalculate names based on root for correct enharmonics
             // (Logic from updateAnalysisDisplay in main.ts)
@@ -176,56 +179,43 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, [activeNotes, selectedOptionIndex, analyze]);
 
 
-    const toggleNote = useCallback((noteId: number) => {
-        initAudio(); // Ensure audio is unlocked
-        setActiveNotes(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(noteId)) {
-                newSet.delete(noteId);
-            } else {
-                newSet.add(noteId);
-                playTone(getFrequency(noteId), 0.4, currentWaveform, 0.8);
-            }
-            return newSet;
-        });
-        // Reset selection when notes change
-        setSelectedOptionIndex(0);
-    }, [currentWaveform, getFrequency, playTone, initAudio]);
-
-    const playCurrentChord = useCallback(() => {
-        if (activeNotes.size === 0) return;
+    // Helper to play a set of notes (fire and forget)
+    const playChordNotes = useCallback((notes: Set<number>) => {
+        if (notes.size === 0) return;
         initAudio();
-        const volPerNote = 0.4 / Math.max(1, activeNotes.size);
-        const sortedNotes = Array.from(activeNotes).sort((a, b) => a - b);
+        const volPerNote = 0.4 / Math.max(1, notes.size);
+        const sortedNotes = Array.from(notes).sort((a, b) => a - b);
 
         sortedNotes.forEach((noteId, index) => {
             const freq = getFrequency(noteId);
-            const start = (index * 0.015); // Relative start time
-            // We need absolute time for WebAudio, but playTone handles "startTime || ctx.currentTime"
-            // To be precise, we should pass absolute time. 
-            // For now, let's rely on playTone's internal "now". 
-            // Actually, playTone takes startTime. We should pass ctx.currentTime + delay.
-            // But we don't have ctx exposed here easily without refactoring useAudio to return ctx or currentTime.
-            // Let's just use a timeout for simplicity or assume playTone handles it? 
-            // useAudio's playTone: const start = startTime || ctx.currentTime;
-            // So we can pass a delay if we change playTone signature or pass absolute time.
-            // Let's update playTone to accept delay? Or just pass absolute time.
-            // Since we don't have ctx here, we can't get currentTime.
-            // Quick fix: use setTimeout? No, timing is bad.
-            // Better: useAudio should expose `currentTime`.
-            // OR: playTone takes `delay` instead of `startTime`.
-            // Let's assume playTone handles it. 
-            // Actually, I'll update useAudio to return `currentTime` getter or similar. 
-            // OR simpler: just fire them all at once for now, or use setTimeout (micro-strum is 15ms, setTimeout is ok-ish).
-            // Let's use setTimeout for the strum effect for now to avoid Context complexity.
-            setTimeout(() => playTone(freq, 1.5, currentWaveform, volPerNote), index * 15);
+            // Strum effect using playTone (fire and forget)
+            setTimeout(() => playTone(freq, 1.5, currentWaveform, volPerNote), index * 30);
         });
-    }, [activeNotes, currentWaveform, getFrequency, playTone, initAudio]);
+    }, [currentWaveform, getFrequency, playTone, initAudio]);
+
+    const toggleNote = useCallback((noteId: number) => {
+        initAudio();
+        const newSet = new Set(activeNotes);
+        if (newSet.has(noteId)) {
+            newSet.delete(noteId);
+            stopNote(noteId);
+        } else {
+            newSet.add(noteId);
+            playChordNotes(newSet);
+        }
+        setActiveNotes(newSet);
+        setSelectedOptionIndex(0);
+    }, [activeNotes, playChordNotes, stopNote, initAudio]);
+
+    const playCurrentChord = useCallback(() => {
+        playChordNotes(activeNotes);
+    }, [activeNotes, playChordNotes]);
 
     const reset = useCallback(() => {
+        activeNotes.forEach(noteId => stopNote(noteId));
         setActiveNotes(new Set());
         setSelectedOptionIndex(0);
-    }, []);
+    }, [activeNotes, stopNote]);
 
     const setWaveform = useCallback((type: OscillatorType) => {
         setCurrentWaveform(type);
@@ -236,31 +226,68 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, []);
 
     // MIDI Integration
-    const onMidiNoteOn = useCallback((note: number, velocity: number) => {
+    const [sustainPedal, setSustainPedal] = useState(false);
+
+    // Let's use Refs for the logic to avoid dependency hell and stale closures
+    const heldNotesRef = React.useRef<Set<number>>(new Set());
+    const sustainPedalRef = React.useRef(false);
+
+    const onMidiNoteOnRef = useCallback((note: number, velocity: number) => {
         const noteId = note - 60;
+        heldNotesRef.current.add(noteId);
+
         setActiveNotes(prev => {
             const newSet = new Set(prev);
             if (!newSet.has(noteId)) {
                 newSet.add(noteId);
                 const vol = (velocity / 127) * 0.8;
-                playTone(getFrequency(noteId), 0.4, currentWaveform, vol);
+                startNote(noteId, getFrequency(noteId), currentWaveform, vol);
             }
             return newSet;
         });
         setSelectedOptionIndex(0);
-    }, [currentWaveform, getFrequency, playTone]);
+    }, [currentWaveform, getFrequency, startNote]);
 
-    const onMidiNoteOff = useCallback((note: number) => {
+    const onMidiNoteOffRef = useCallback((note: number) => {
         const noteId = note - 60;
-        setActiveNotes(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(noteId);
-            return newSet;
-        });
-        setSelectedOptionIndex(0);
-    }, []);
+        heldNotesRef.current.delete(noteId);
 
-    useMidi(onMidiNoteOn, onMidiNoteOff);
+        if (!sustainPedalRef.current) {
+            setActiveNotes(prev => {
+                const newSet = new Set(prev);
+                if (newSet.has(noteId)) {
+                    newSet.delete(noteId);
+                    stopNote(noteId);
+                }
+                return newSet;
+            });
+            setSelectedOptionIndex(0);
+        }
+    }, [stopNote]);
+
+    const onMidiControlChangeRef = useCallback((cc: number, value: number) => {
+        if (cc === 64) {
+            const isDown = value >= 64;
+            sustainPedalRef.current = isDown;
+            setSustainPedal(isDown); // Update state just in case we want to show it in UI
+
+            if (!isDown) {
+                // Pedal released: stop notes that are NOT held
+                setActiveNotes(prevActive => {
+                    const newActive = new Set(prevActive);
+                    prevActive.forEach(noteId => {
+                        if (!heldNotesRef.current.has(noteId)) {
+                            newActive.delete(noteId);
+                            stopNote(noteId);
+                        }
+                    });
+                    return newActive;
+                });
+            }
+        }
+    }, [stopNote]);
+
+    const { isConnected: midiConnected, inputs: midiInputs } = useMidi(onMidiNoteOnRef, onMidiNoteOffRef, onMidiControlChangeRef);
 
     return (
         <HarmonicContext.Provider value={{
@@ -274,7 +301,10 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             setWaveform,
             playCurrentChord,
             reset,
-            selectChordOption
+            selectChordOption,
+            midiConnected,
+            midiInputs,
+            sustainPedal
         }}>
             {children}
         </HarmonicContext.Provider>
