@@ -1157,12 +1157,17 @@ export function analyzeChord(
       score += 3;
     }
 
+    // Bonus for augmented chords (prefer + interpretation)
+    if (chord[1].includes("+")) {
+      score += 3;
+    }
+
     // Penalty for omissions (unless necessary)
     if (quality.includes("omit3")) {
       score += 3;
     }
     if (quality.includes("omit5")) {
-      score += 1;
+      score += 2;
     }
     // Slight penalty for altered extensions to prefer simpler ones if available
     if (quality.includes("b9") || quality.includes("#9") || quality.includes("#11") || quality.includes("b13")) {

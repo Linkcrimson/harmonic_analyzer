@@ -8,6 +8,7 @@ export default defineConfig({
     },
     plugins: [viteSingleFile()],
     build: {
+        outDir: 'docs',
         rollupOptions: {
             input: './index.html'
         }
