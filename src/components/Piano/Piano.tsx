@@ -28,6 +28,8 @@ interface KeyProps {
 // Memoized Key Component
 const Key: React.FC<KeyProps> = memo(({ id, isWhite, isActive, intervalType, label, blackKey, onInteraction }) => {
 
+    const lastTouchTime = React.useRef(0);
+
     const getKeyStyle = (active: boolean, type?: string, isBlack: boolean = false) => {
         if (!active) return {};
 
@@ -50,7 +52,15 @@ const Key: React.FC<KeyProps> = memo(({ id, isWhite, isActive, intervalType, lab
     };
 
     const handleTouchStart = (e: React.TouchEvent, noteId: number) => {
-        e.preventDefault(); // Prevent mouse events emulation to avoid double-toggling
+        // We do NOT preventDefault here to allow scrolling (pan-x).
+        // We track the touch time to ignore the subsequent emulated mouse event.
+        lastTouchTime.current = Date.now();
+        onInteraction(e, noteId);
+    };
+
+    const handleMouseDown = (e: React.MouseEvent, noteId: number) => {
+        // Ignore mouse events that fire immediately after a touch event (emulation)
+        if (Date.now() - lastTouchTime.current < 500) return;
         onInteraction(e, noteId);
     };
 
@@ -60,11 +70,13 @@ const Key: React.FC<KeyProps> = memo(({ id, isWhite, isActive, intervalType, lab
             style={{
                 zIndex: 1,
                 background: !isActive ? 'linear-gradient(to bottom, #ffffff 0%, #e6e6e6 100%)' : undefined,
+                touchAction: 'pan-x', // Allow horizontal scrolling
                 ...getKeyStyle(isActive, intervalType)
             }}
-            onMouseDown={(e) => onInteraction(e, id)}
+            onMouseDown={(e) => handleMouseDown(e, id)}
             onTouchStart={(e) => handleTouchStart(e, id)}
             onKeyDown={(e) => handleKeyDown(e, id)}
+            onContextMenu={(e) => e.preventDefault()} // Prevent context menu on long press
             role="button"
             aria-label={`${label} key`}
             tabIndex={0}
@@ -79,11 +91,13 @@ const Key: React.FC<KeyProps> = memo(({ id, isWhite, isActive, intervalType, lab
                         transform: 'translateX(-50%)',
                         zIndex: 10,
                         background: !blackKey.isActive ? 'linear-gradient(to bottom, #333 0%, #000 100%)' : undefined,
+                        touchAction: 'pan-x',
                         ...getKeyStyle(blackKey.isActive, blackKey.intervalType, true)
                     }}
-                    onMouseDown={(e) => onInteraction(e, blackKey.id)}
+                    onMouseDown={(e) => handleMouseDown(e, blackKey.id)}
                     onTouchStart={(e) => handleTouchStart(e, blackKey.id)}
                     onKeyDown={(e) => handleKeyDown(e, blackKey.id)}
+                    onContextMenu={(e) => e.preventDefault()}
                     role="button"
                     aria-label={`${blackKey.label} key`}
                     tabIndex={0}
@@ -203,8 +217,8 @@ export const Piano: React.FC = () => {
 
     return (
         <div className="overflow-x-auto hide-scroll pb-1 lg:pb-4 w-full flex justify-start lg:justify-center relative z-10">
-            <div className="w-full flex justify-center">
-                <div id="keyboard" className="flex relative select-none h-32 lg:h-48 w-full max-w-[600px]" style={{ touchAction: 'none' }}>
+            <div className="w-full flex justify-start lg:justify-center">
+                <div id="keyboard" className="flex relative select-none h-32 lg:h-48 w-full min-w-[750px] lg:min-w-0 lg:max-w-[800px]" style={{ touchAction: 'pan-x' }}>
                     {keys.map(key => (
                         <Key
                             key={key.id}
