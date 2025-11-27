@@ -619,6 +619,26 @@ function updateAnalysisDisplay() {
 }
 
 
+function addInputListeners(element: HTMLElement, noteId: number) {
+    const handleStart = (e: Event) => {
+        // Prevent default to stop scrolling/zooming/selection on touch
+        if (e.type === 'touchstart') {
+            e.preventDefault();
+        }
+
+        // Ensure audio is unlocked since we are stopping propagation
+        unlockAudio();
+
+        // Stop propagation to prevent triggering parent elements (black key -> white key)
+        e.stopPropagation();
+
+        toggleNote(noteId);
+    };
+
+    element.addEventListener('mousedown', handleStart);
+    element.addEventListener('touchstart', handleStart, { passive: false });
+}
+
 function renderPiano() {
     const keyboard = document.getElementById('keyboard');
     if (!keyboard) return;
@@ -664,7 +684,8 @@ function renderPiano() {
             }
             wKey.textContent = displayText;
 
-            wKey.onclick = () => toggleNote(whiteNoteId);
+            // Use new helper for listeners
+            addInputListeners(wKey, whiteNoteId);
 
             if (keyData.hasBlackLeft) {
                 const blackNoteId = whiteNoteId - 1;
@@ -683,6 +704,8 @@ function renderPiano() {
                 }
 
                 const bKey = document.createElement('div');
+                // Changed w-[60%] to style.width for better control if needed, but class is fine too.
+                // Keeping w-[60%] as requested in plan, but ensuring it's relative to parent.
                 bKey.className = `black-key absolute top-0 h-2/3 w-[60%] rounded-b border border-black cursor-pointer flex items-end justify-center pb-2 text-[10px] select-none ${blackColorClass}`;
                 bKey.style.left = "0";
                 bKey.style.transform = "translateX(-50%)";
@@ -694,10 +717,10 @@ function renderPiano() {
                     bKey.style.color = 'transparent';
                 }
                 bKey.textContent = blackDisplayText;
-                bKey.onclick = (e) => {
-                    e.stopPropagation();
-                    toggleNote(blackNoteId);
-                };
+
+                // Use new helper for listeners
+                addInputListeners(bKey, blackNoteId);
+
                 wKey.appendChild(bKey);
             }
             keyboard.appendChild(wKey);
@@ -726,7 +749,10 @@ function renderPiano() {
         finalKey.style.fontWeight = 'bold';
     }
     finalKey.textContent = finalDisplayText;
-    finalKey.onclick = () => toggleNote(finalC);
+
+    // Use new helper for listeners
+    addInputListeners(finalKey, finalC);
+
     keyboard.appendChild(finalKey);
 }
 

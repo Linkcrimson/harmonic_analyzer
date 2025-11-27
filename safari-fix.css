@@ -1,0 +1,21 @@
+/* Safari iOS Fixes for Piano Keyboard */
+
+/* Fix white key rendering on Safari iOS */
+.white-key {
+    min-width: 40px !important;
+    flex: 1 1 auto !important;
+    -webkit-tap-highlight-color: transparent !important;
+    height: 100% !important;
+}
+
+/* Ensure keyboard container uses flex properly */
+#keyboard {
+    display: flex !important;
+    display: -webkit-flex !important;
+    flex-direction: row !important;
+    min-height: 120px !important;
+    /* Force height on mobile */
+    background-color: #1a1a1a;
+    /* Visible background to check container existence */
+    overflow-x: auto !important;
+}
