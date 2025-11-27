@@ -1,16 +1,13 @@
 import { defineConfig } from 'vite';
-import { viteSingleFile } from 'vite-plugin-singlefile';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
     base: './',
     server: {
         open: true
     },
-    plugins: [viteSingleFile()],
+    plugins: [react()],
     build: {
         outDir: 'docs',
-        rollupOptions: {
-            input: './index.html'
-        }
     }
 });
