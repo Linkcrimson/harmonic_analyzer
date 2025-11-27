@@ -49,6 +49,11 @@ const Key: React.FC<KeyProps> = memo(({ id, isWhite, isActive, intervalType, lab
         }
     };
 
+    const handleTouchStart = (e: React.TouchEvent, noteId: number) => {
+        e.preventDefault(); // Prevent mouse events emulation to avoid double-toggling
+        onInteraction(e, noteId);
+    };
+
     return (
         <div
             className={`white-key relative flex-1 h-full border border-gray-800 rounded-b cursor-pointer flex items-end justify-center pb-2 text-sm text-gray-500 select-none transition-colors duration-100 outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50`}
@@ -58,7 +63,7 @@ const Key: React.FC<KeyProps> = memo(({ id, isWhite, isActive, intervalType, lab
                 ...getKeyStyle(isActive, intervalType)
             }}
             onMouseDown={(e) => onInteraction(e, id)}
-            onTouchStart={(e) => onInteraction(e, id)}
+            onTouchStart={(e) => handleTouchStart(e, id)}
             onKeyDown={(e) => handleKeyDown(e, id)}
             role="button"
             aria-label={`${label} key`}
@@ -77,7 +82,7 @@ const Key: React.FC<KeyProps> = memo(({ id, isWhite, isActive, intervalType, lab
                         ...getKeyStyle(blackKey.isActive, blackKey.intervalType, true)
                     }}
                     onMouseDown={(e) => onInteraction(e, blackKey.id)}
-                    onTouchStart={(e) => onInteraction(e, blackKey.id)}
+                    onTouchStart={(e) => handleTouchStart(e, blackKey.id)}
                     onKeyDown={(e) => handleKeyDown(e, blackKey.id)}
                     role="button"
                     aria-label={`${blackKey.label} key`}
