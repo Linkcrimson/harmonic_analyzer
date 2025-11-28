@@ -75,10 +75,10 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const sortedNotes = Array.from(notes).sort((a, b) => a - b);
         const chordVec = new positionVector(sortedNotes, 12, 12).normalizeToModulo();
 
-        // 1. Get Names
+        // 1. Get Names (Initial fallback)
         let names: string[] = [];
         try {
-            names = scaleNames(chordVec, true, false, true, true);
+            names = scaleNames(chordVec, true, false, true, false);
         } catch (e) {
             console.error(e);
         }
@@ -156,7 +156,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             else if (seventhQuality === "Sesta/Dim") mapInterval([9], 'seventh');
 
             setAnalysis({
-                rootName: components.rootName, // Or use newNoteNames.get(rootVal)
+                rootName: components.rootName,
                 quality: detailedAnalysis.thirdQuality,
                 stability: detailedAnalysis.fifthQuality,
                 function: detailedAnalysis.seventhQuality,

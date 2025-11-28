@@ -1,8 +1,6 @@
 import React from 'react';
 import { HarmonicProvider } from './context/HarmonicContext';
-import { Header } from './components/Header';
-import { ChordDisplay } from './components/Analysis/ChordDisplay';
-import { AnalysisGrid } from './components/Analysis/AnalysisGrid';
+import { AnalysisView } from './components/Analysis/AnalysisView';
 import { Controls } from './components/Controls';
 import { Piano } from './components/Piano/Piano';
 
@@ -11,9 +9,7 @@ const AppContent: React.FC = () => {
         <main className="w-full max-w-7xl p-2 md:p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 lg:gap-8">
             {/* Left Column: Analysis (5 cols) */}
             <div className="lg:col-span-5 flex flex-col gap-3 md:gap-6">
-                <Header />
-                <ChordDisplay />
-                <AnalysisGrid />
+                <AnalysisView />
             </div>
 
             {/* Right Column: Keyboard & Controls (7 cols) */}
@@ -22,7 +18,10 @@ const AppContent: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-purple-900/10 pointer-events-none"></div>
 
                 <Controls />
-                <Piano />
+                {/* HarmonicCircle removed from here */}
+                <div className="mt-auto w-full">
+                    <Piano />
+                </div>
             </div>
         </main>
     );
