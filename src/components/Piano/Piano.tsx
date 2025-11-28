@@ -28,7 +28,7 @@ interface KeyProps {
 // Memoized Key Component
 const Key: React.FC<KeyProps> = memo(({ id, isActive, intervalType, label, blackKey, onInteraction }) => {
 
-    const touchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastTouchTime = useRef(0);
     const startPos = useRef<{ x: number, y: number } | null>(null);
     const isScrolling = useRef(false);
 
@@ -53,16 +53,9 @@ const Key: React.FC<KeyProps> = memo(({ id, isActive, intervalType, label, black
         }
     };
 
-    const handleTouchStart = (e: React.TouchEvent, noteId: number) => {
-        // Delay touch to detect scroll
+    const handleTouchStart = (e: React.TouchEvent) => {
         startPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         isScrolling.current = false;
-
-        touchTimeout.current = setTimeout(() => {
-            if (!isScrolling.current) {
-                onInteraction(e, noteId);
-            }
-        }, 75); // 75ms delay to detect scroll
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
@@ -72,27 +65,22 @@ const Key: React.FC<KeyProps> = memo(({ id, isActive, intervalType, label, black
 
         if (dx > 10 || dy > 10) {
             isScrolling.current = true;
-            if (touchTimeout.current) {
-                clearTimeout(touchTimeout.current);
-                touchTimeout.current = null;
-            }
         }
     };
 
     const handleTouchEnd = (e: React.TouchEvent, noteId: number) => {
-        if (touchTimeout.current) {
-            // If timeout is still pending, it was a tap
-            clearTimeout(touchTimeout.current);
-            touchTimeout.current = null;
-            if (!isScrolling.current) {
-                onInteraction(e, noteId);
-            }
+        if (!isScrolling.current) {
+            // It was a tap, trigger interaction
+            lastTouchTime.current = Date.now();
+            onInteraction(e, noteId);
         }
         startPos.current = null;
+        isScrolling.current = false;
     };
 
     const handleMouseDown = (e: React.MouseEvent, noteId: number) => {
-        // Mouse events are instant
+        // Ignore mouse events that fire immediately after a touch event (emulation)
+        if (Date.now() - lastTouchTime.current < 500) return;
         onInteraction(e, noteId);
     };
 
@@ -106,7 +94,7 @@ const Key: React.FC<KeyProps> = memo(({ id, isActive, intervalType, label, black
                 ...getKeyStyle(isActive, intervalType)
             }}
             onMouseDown={(e) => handleMouseDown(e, id)}
-            onTouchStart={(e) => handleTouchStart(e, id)}
+            onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={(e) => handleTouchEnd(e, id)}
             onKeyDown={(e) => handleKeyDown(e, id)}
@@ -129,7 +117,7 @@ const Key: React.FC<KeyProps> = memo(({ id, isActive, intervalType, label, black
                         ...getKeyStyle(blackKey.isActive, blackKey.intervalType, true)
                     }}
                     onMouseDown={(e) => handleMouseDown(e, blackKey.id)}
-                    onTouchStart={(e) => handleTouchStart(e, blackKey.id)}
+                    onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={(e) => handleTouchEnd(e, blackKey.id)}
                     onKeyDown={(e) => handleKeyDown(e, blackKey.id)}
@@ -170,55 +158,9 @@ const octavePattern = [
     { noteIndex: 11, label: 'Si', hasBlackLeft: true }
 ];
 
-const ScrollBar: React.FC<{ scrollContainerRef: React.RefObject<HTMLDivElement | null> }> = ({ scrollContainerRef }) => {
-    const [isScrolling, setIsScrolling] = useState(false);
-    const startX = useRef(0);
-    const startScrollLeft = useRef(0);
-
-    const handleTouchStart = (e: React.TouchEvent) => {
-        if (!scrollContainerRef.current) return;
-        setIsScrolling(true);
-        startX.current = e.touches[0].clientX;
-        startScrollLeft.current = scrollContainerRef.current.scrollLeft;
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (!scrollContainerRef.current) return;
-        const dx = e.touches[0].clientX - startX.current;
-        scrollContainerRef.current.scrollLeft = startScrollLeft.current - dx;
-    };
-
-    const handleTouchEnd = () => {
-        setIsScrolling(false);
-    };
-
-    return (
-        <div
-            className="w-full h-8 bg-[#222] border-b border-[#333] flex items-center justify-center relative overflow-hidden cursor-grab active:cursor-grabbing touch-none mb-1 rounded-t-lg"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-        >
-            {/* Animated Background Gradient */}
-            <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-[#333] to-transparent opacity-30 transition-transform duration-300 ${isScrolling ? 'scale-x-150' : 'scale-x-100'}`} />
-
-            {/* Arrows */}
-            <div className="flex items-center gap-4 text-gray-500 text-xs font-medium tracking-widest uppercase select-none pointer-events-none">
-                <span className={`transition-opacity duration-300 ${isScrolling ? 'opacity-100 animate-pulse' : 'opacity-50'}`}>&lt;&lt;&lt;</span>
-                <span>Scorri</span>
-                <span className={`transition-opacity duration-300 ${isScrolling ? 'opacity-100 animate-pulse' : 'opacity-50'}`}>&gt;&gt;&gt;</span>
-            </div>
-
-            {/* Active Indicator Line */}
-            <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 transition-opacity duration-300 ${isScrolling ? 'opacity-100' : 'opacity-0'}`} />
-        </div>
-    );
-};
-
-export const Piano: React.FC = () => {
+export const Piano = React.forwardRef<HTMLDivElement>((props, ref) => {
     const { activeNotes, analysis, toggleNote } = useHarmonic();
     const { intervals, noteNames } = analysis;
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const keys = useMemo(() => {
         const generatedKeys: KeyData[] = [];
@@ -299,13 +241,8 @@ export const Piano: React.FC = () => {
 
     return (
         <div className="w-full flex flex-col">
-            {/* Scroll Bar - Visible on Mobile/Tablet mainly, or always if overflow exists */}
-            <div className="lg:hidden w-full">
-                <ScrollBar scrollContainerRef={scrollContainerRef} />
-            </div>
-
             <div
-                ref={scrollContainerRef}
+                ref={ref}
                 className="overflow-x-auto hide-scroll pb-1 lg:pb-4 w-full flex justify-start lg:justify-center relative z-10 scroll-smooth"
             >
                 <div className="w-full flex justify-start lg:justify-center">
@@ -322,4 +259,6 @@ export const Piano: React.FC = () => {
             </div>
         </div>
     );
-};
+});
+
+Piano.displayName = 'Piano';

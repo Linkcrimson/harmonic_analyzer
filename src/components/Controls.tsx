@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { useHarmonic } from '../context/HarmonicContext';
 import { OscillatorType } from '../hooks/useAudio';
 
@@ -14,8 +14,15 @@ const WaveformIcon: React.FC<{ type: OscillatorType }> = ({ type }) => {
     }
 };
 
-export const Controls: React.FC = () => {
+interface ControlsProps {
+    scrollContainerRef?: React.RefObject<HTMLDivElement>;
+}
+
+export const Controls: React.FC<ControlsProps> = ({ scrollContainerRef }) => {
     const { currentWaveform, setWaveform, playCurrentChord, reset } = useHarmonic();
+    const [isScrolling, setIsScrolling] = useState(false);
+    const startX = useRef(0);
+    const startScrollLeft = useRef(0);
 
     const toggleWaveform = () => {
         const currentIndex = waveforms.indexOf(currentWaveform);
@@ -23,12 +30,46 @@ export const Controls: React.FC = () => {
         setWaveform(waveforms[nextIndex]);
     };
 
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (!scrollContainerRef?.current) return;
+        setIsScrolling(true);
+        startX.current = e.touches[0].clientX;
+        startScrollLeft.current = scrollContainerRef.current.scrollLeft;
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!scrollContainerRef?.current) return;
+        const dx = e.touches[0].clientX - startX.current;
+        scrollContainerRef.current.scrollLeft = startScrollLeft.current - dx;
+    };
+
+    const handleTouchEnd = () => {
+        setIsScrolling(false);
+    };
+
     return (
-        <div className="flex justify-between items-center w-full max-w-[600px] mb-2 lg:mb-4 relative z-10">
-            <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">
-                Tastiera Interattiva
+        <div
+            className="flex justify-between items-center w-full max-w-[600px] mb-2 lg:mb-4 relative z-10 overflow-hidden rounded-lg p-1 transition-colors duration-300"
+            style={{
+                background: isScrolling ? 'rgba(255,255,255,0.05)' : 'transparent',
+                touchAction: 'pan-x'
+            }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+        >
+            {/* Animated Background Gradient for Feedback */}
+            <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-[#333] to-transparent opacity-30 pointer-events-none transition-transform duration-300 ${isScrolling ? 'scale-x-150' : 'scale-x-100 opacity-0'}`} />
+
+            <div className="text-xs text-gray-500 font-bold uppercase tracking-widest flex items-center gap-2 pointer-events-none">
+                <span className={`transition-opacity duration-300 ${isScrolling ? 'opacity-100 text-blue-400' : 'opacity-0 hidden'}`}>&lt;&lt;</span>
+                <span className={`transition-colors duration-300 ${isScrolling ? 'text-blue-400' : ''}`}>
+                    {isScrolling ? 'SCORRI' : 'TASTIERA INTERATTIVA'}
+                </span>
+                <span className={`transition-opacity duration-300 ${isScrolling ? 'opacity-100 text-blue-400' : 'opacity-0 hidden'}`}>&gt;&gt;</span>
             </div>
-            <div className="flex gap-2 lg:gap-3">
+
+            <div className="flex gap-2 lg:gap-3 relative z-20" onTouchStart={(e) => e.stopPropagation()}>
                 {/* Waveform Toggle */}
                 <button onClick={toggleWaveform}
                     className="h-10 w-10 rounded-full bg-[#161616] text-gray-400 hover:text-white border border-[#333] hover:border-gray-500 flex items-center justify-center transition-colors focus:outline-none shadow-sm"
