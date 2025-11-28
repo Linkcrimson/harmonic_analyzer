@@ -59,21 +59,7 @@ export const ChordSymbol: React.FC<ChordSymbolProps> = ({ option, className = ""
         return <span className="text-[0.8em] font-medium ml-[0.05em]">{baseStr}</span>;
     };
 
-    // Extensions/Quality
-    const renderQuality = (qual: string[]) => {
-        if (qual.length === 0) return null;
 
-        // Container for extensions - superscripted
-        return (
-            <span className="inline-flex flex-col justify-start ml-[0.1em] -translate-y-[0.3em] align-top">
-                {qual.map((q, i) => (
-                    <span key={i} className="text-[0.5em] font-medium leading-[0.9] tracking-tight">
-                        {q}
-                    </span>
-                ))}
-            </span>
-        );
-    };
 
     // Inversion
     const renderInversion = (inv: string) => {

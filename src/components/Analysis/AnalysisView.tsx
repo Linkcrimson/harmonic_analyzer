@@ -73,7 +73,7 @@ export const AnalysisView: React.FC = () => {
 
 
     return (
-        <div className="flex flex-col gap-3 md:gap-6 relative">
+        <div className="flex flex-col gap-1 md:gap-6 relative">
             {/* Header Row with Toggle Button */}
             <div className="flex justify-between items-start">
                 <div className="flex-1">
@@ -112,7 +112,7 @@ export const AnalysisView: React.FC = () => {
                 {viewMode === 'circle' ? (
                     <div className="flex-1 flex justify-center items-center">
                         {/* Pass a responsive size or handle it via CSS in HarmonicCircle */}
-                        <div className="w-full max-w-[440px] aspect-square">
+                        <div className="w-full max-w-[320px] md:max-w-[440px] aspect-square">
                             {/* We might need to make HarmonicCircle responsive. For now, let's try a fixed size that fits or 100% */}
                             <HarmonicCircle size={420} />
                         </div>
