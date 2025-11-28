@@ -52,16 +52,8 @@ export const AnalysisGrid: React.FC = () => {
     const { analysis } = useHarmonic();
     const { rootName, quality, stability, function: func, extensions } = analysis;
 
-    // Determine active states based on value content (simple heuristic from main.ts logic)
-    // In main.ts, active class is added if value is not empty/default, but specific logic was used.
-    // Let's replicate the logic:
-    // Root: always active if rootName is valid (not --)
-    // Quality: active if not -- (and specific logic for omitted?)
-    // Stability: active if not Omessa
-    // Function: active if not Triade
-
     const isRootActive = rootName !== '--';
-    const isQualityActive = quality !== '--';
+    const isQualityActive = Array.from(analysis.intervals.values()).includes('third');
     const isStabilityActive = stability !== '--' && stability !== 'Omessa';
     const isFunctionActive = func !== '--' && func !== 'Triade';
     const isExtensionsActive = extensions.length > 0;
