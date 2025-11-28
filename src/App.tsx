@@ -13,7 +13,7 @@ const AppContent: React.FC = () => {
             </div>
 
             {/* Right Column: Keyboard & Controls (7 cols) */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 lg:relative lg:col-span-7 flex flex-col bg-[#111] rounded-t-3xl lg:rounded-3xl border-t lg:border border-[#222] p-4 lg:p-8 overflow-hidden min-h-[300px] lg:min-h-[500px] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] lg:shadow-none">
+            <div className="fixed bottom-0 left-0 right-0 z-50 lg:relative lg:col-span-7 flex flex-col bg-[#111] rounded-t-3xl lg:rounded-3xl border-t lg:border border-[#222] p-4 pb-2 lg:p-8 overflow-hidden min-h-0 lg:min-h-[500px] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] lg:shadow-none">
                 {/* Background Decoration */}
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-purple-900/10 pointer-events-none"></div>
 
