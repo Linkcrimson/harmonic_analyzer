@@ -41,10 +41,25 @@ export const AnalysisView: React.FC = () => {
             }
         };
 
+        // Find root pitch to calculate relative intervals
+        let rootPitch = 0;
+        for (const note of activeNotes) {
+            if (analysis.intervals.get(note) === 'root') {
+                rootPitch = note % 12;
+                break;
+            }
+        }
+
         return Array.from(activeNotes).map((note: number) => {
             const pitch = note % 12;
-            const angleDeg = (pitch * 30) - 90; // -90 to start at top (C)
+            // Calculate interval relative to root
+            const interval = (pitch - rootPitch + 12) % 12;
+
+            // Match HarmonicCircle orientation: Root (interval 0) at bottom (90 deg)
+            // Formula: 90 - (interval * 30)
+            const angleDeg = 90 - (interval * 30);
             const angleRad = (angleDeg * Math.PI) / 180;
+
             const r = 8; // radius of mini circle
             const type = analysis.intervals.get(note);
 
