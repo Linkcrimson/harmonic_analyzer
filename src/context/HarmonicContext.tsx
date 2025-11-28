@@ -18,6 +18,12 @@ interface HarmonicState {
         extensions: string[];
         intervals: Map<number, string>; // noteId -> interval type (root, third, etc.)
         noteNames: Map<number, string>;
+        flags: {
+            isRootActive: boolean;
+            isThirdActive: boolean;
+            isFifthActive: boolean;
+            isSeventhActive: boolean;
+        };
     };
     toggleNote: (noteId: number) => void;
     setWaveform: (type: OscillatorType) => void;
@@ -27,6 +33,8 @@ interface HarmonicState {
     midiConnected: boolean;
     midiInputs: string[];
     sustainPedal: boolean;
+    forceBassAsRoot: boolean;
+    toggleBassAsRoot: () => void;
 }
 
 const HarmonicContext = createContext<HarmonicState | null>(null);
@@ -41,6 +49,11 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [activeNotes, setActiveNotes] = useState<Set<number>>(new Set());
     const [currentWaveform, setCurrentWaveform] = useState<OscillatorType>('sine');
     const [selectedOptionIndex, setSelectedOptionIndex] = useState(0);
+    const [forceBassAsRoot, setForceBassAsRoot] = useState(false);
+
+    const toggleBassAsRoot = useCallback(() => {
+        setForceBassAsRoot(prev => !prev);
+    }, []);
 
     // Analysis State
     const [chordOptions, setChordOptions] = useState<any[]>([]);
@@ -51,13 +64,19 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         function: '--',
         extensions: [],
         intervals: new Map(),
-        noteNames: new Map()
+        noteNames: new Map(),
+        flags: {
+            isRootActive: false,
+            isThirdActive: false,
+            isFifthActive: false,
+            isSeventhActive: false
+        }
     });
 
     const { initAudio, startNote, stopNote, playTone, getFrequency } = useAudio();
 
     // Analysis Logic (Ported from main.ts)
-    const analyze = useCallback((notes: Set<number>, selectedIndex: number = 0) => {
+    const analyze = useCallback((notes: Set<number>, selectedIndex: number = 0, bassAsRoot: boolean = false) => {
         if (notes.size === 0) {
             setChordOptions([]);
             setAnalysis({
@@ -67,7 +86,13 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 function: '--',
                 extensions: [],
                 intervals: new Map(),
-                noteNames: new Map()
+                noteNames: new Map(),
+                flags: {
+                    isRootActive: false,
+                    isThirdActive: false,
+                    isFifthActive: false,
+                    isSeventhActive: false
+                }
             });
             return;
         }
@@ -91,7 +116,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // 2. Get Chord Options
         let options: any[] = [];
         try {
-            const res = getChordName(chordVec, true);
+            const res = getChordName(chordVec, !bassAsRoot);
             options = res.options;
         } catch (e) {
             console.error(e);
@@ -155,6 +180,8 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             else if (seventhQuality === "Min 7") mapInterval([10], 'seventh');
             else if (seventhQuality === "Sesta/Dim") mapInterval([9], 'seventh');
 
+            const intervalValues = Array.from(newIntervals.values());
+
             setAnalysis({
                 rootName: components.rootName,
                 quality: detailedAnalysis.thirdQuality,
@@ -162,21 +189,37 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 function: detailedAnalysis.seventhQuality,
                 extensions: detailedAnalysis.extensions,
                 intervals: newIntervals,
-                noteNames: newNoteNames
+                noteNames: newNoteNames,
+                flags: {
+                    isRootActive: intervalValues.includes('root'),
+                    isThirdActive: intervalValues.includes('third'),
+                    isFifthActive: intervalValues.includes('fifth'),
+                    isSeventhActive: intervalValues.includes('seventh')
+                }
             });
         } else {
             // Fallback
             const fallbackIntervals = new Map<number, string>();
             sortedNotes.forEach(n => fallbackIntervals.set(n, 'active'));
-            setAnalysis(prev => ({ ...prev, intervals: fallbackIntervals, noteNames: newNoteNames }));
+            setAnalysis(prev => ({
+                ...prev,
+                intervals: fallbackIntervals,
+                noteNames: newNoteNames,
+                flags: {
+                    isRootActive: false,
+                    isThirdActive: false,
+                    isFifthActive: false,
+                    isSeventhActive: false
+                }
+            }));
         }
 
     }, []);
 
     // Re-analyze when activeNotes or selection changes
     useEffect(() => {
-        analyze(activeNotes, selectedOptionIndex);
-    }, [activeNotes, selectedOptionIndex, analyze]);
+        analyze(activeNotes, selectedOptionIndex, forceBassAsRoot);
+    }, [activeNotes, selectedOptionIndex, forceBassAsRoot, analyze]);
 
 
     // Helper to play a set of notes (fire and forget)
@@ -304,7 +347,9 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             selectChordOption,
             midiConnected,
             midiInputs,
-            sustainPedal
+            sustainPedal,
+            forceBassAsRoot,
+            toggleBassAsRoot
         }}>
             {children}
         </HarmonicContext.Provider>

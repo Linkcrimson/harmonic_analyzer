@@ -16,13 +16,13 @@ export const AnalysisView: React.FC = () => {
 
     // 1. Cards Icon (shows active analysis components)
     const cardsIconColors = useMemo(() => {
-        const { rootName, quality, stability, function: func, extensions } = analysis;
+        const { flags } = analysis;
         return {
-            root: rootName !== '--' ? '#81c784' : '#333',
-            quality: quality !== '--' ? '#64b5f6' : '#333',
-            stability: (stability !== '--' && stability !== 'Omessa') ? '#e57373' : '#333',
-            func: (func !== '--' && func !== 'Triade') ? '#ffd54f' : '#333',
-            ext: extensions.length > 0 ? '#ba68c8' : '#333'
+            root: flags.isRootActive ? '#81c784' : '#333',
+            quality: flags.isThirdActive ? '#64b5f6' : '#333',
+            stability: flags.isFifthActive ? '#e57373' : '#333',
+            func: flags.isSeventhActive ? '#ffd54f' : '#333',
+            ext: analysis.extensions.length > 0 ? '#ba68c8' : '#333'
         };
     }, [analysis]);
 
@@ -108,13 +108,13 @@ export const AnalysisView: React.FC = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className="min-h-[400px] flex flex-col">
+            <div className="flex-1 flex flex-col min-h-0">
                 {viewMode === 'circle' ? (
                     <div className="flex-1 flex justify-center items-center">
                         {/* Pass a responsive size or handle it via CSS in HarmonicCircle */}
-                        <div className="w-full max-w-[400px] aspect-square">
+                        <div className="w-full max-w-[440px] aspect-square">
                             {/* We might need to make HarmonicCircle responsive. For now, let's try a fixed size that fits or 100% */}
-                            <HarmonicCircle size={360} />
+                            <HarmonicCircle size={420} />
                         </div>
                     </div>
                 ) : (

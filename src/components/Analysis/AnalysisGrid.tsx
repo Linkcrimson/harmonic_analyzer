@@ -50,12 +50,9 @@ const THEME_COLORS = {
 
 export const AnalysisGrid: React.FC = () => {
     const { analysis } = useHarmonic();
-    const { rootName, quality, stability, function: func, extensions } = analysis;
+    const { rootName, quality, stability, function: func, extensions, flags } = analysis;
+    const { isRootActive, isThirdActive, isFifthActive, isSeventhActive } = flags;
 
-    const isRootActive = rootName !== '--';
-    const isQualityActive = Array.from(analysis.intervals.values()).includes('third');
-    const isStabilityActive = stability !== '--' && stability !== 'Omessa';
-    const isFunctionActive = func !== '--' && func !== 'Triade';
     const isExtensionsActive = extensions.length > 0;
 
     return (
@@ -74,7 +71,7 @@ export const AnalysisGrid: React.FC = () => {
                     label="2. Qualità"
                     roman="Ⅲ"
                     value={quality}
-                    isActive={isQualityActive}
+                    isActive={isThirdActive}
                     color={THEME_COLORS.third}
                 />
                 <Card
@@ -82,7 +79,7 @@ export const AnalysisGrid: React.FC = () => {
                     label="3. Stabilità"
                     roman="Ⅴ"
                     value={stability}
-                    isActive={isStabilityActive}
+                    isActive={isFifthActive}
                     color={THEME_COLORS.fifth}
                 />
                 <Card
@@ -90,7 +87,7 @@ export const AnalysisGrid: React.FC = () => {
                     label="4. Funzione"
                     roman="Ⅶ"
                     value={func}
-                    isActive={isFunctionActive}
+                    isActive={isSeventhActive}
                     color={THEME_COLORS.seventh}
                 />
             </div>
