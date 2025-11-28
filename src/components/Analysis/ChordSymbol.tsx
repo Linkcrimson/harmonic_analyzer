@@ -109,10 +109,24 @@ export const ChordSymbol: React.FC<ChordSymbolProps> = ({ option, className = ""
     };
 
     return (
-        <span className={`${className} inline-flex items-baseline`}>
+        <span className={`${className} inline-flex items-baseline whitespace-nowrap`}>
             {renderRoot(rootName)}
             {renderBase(base)}
-            {renderQuality(displayQuality)}
+            {/* Extensions and Inversions wrapper to keep them together if possible, or just flow */}
+            <span className="inline-flex flex-col justify-start ml-[0.1em] -translate-y-[0.3em] align-top">
+                {/* Quality/Extensions */}
+                {displayQuality.length > 0 && (
+                    <span className="inline-flex flex-wrap max-w-[120px]">
+                        {displayQuality.map((q, i) => (
+                            <span key={i} className="text-[0.5em] font-medium leading-[0.9] tracking-tight mr-[0.1em]">
+                                {q}
+                            </span>
+                        ))}
+                    </span>
+                )}
+            </span>
+            {/* Inversion - keep it outside the superscript if it should be baseline, or inside if superscript. Usually baseline or slightly subscript. */}
+            {/* Let's keep inversion baseline but small */}
             {renderInversion(components.inversion)}
         </span>
     );

@@ -6,7 +6,7 @@ interface HarmonicCircleProps {
     size?: number;
 }
 
-export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 300 }) => {
+export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) => {
     const { activeNotes, analysis, chordName, chordOptions, selectedOptionIndex } = useHarmonic();
     const { intervals, noteNames } = analysis;
 
@@ -160,7 +160,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 300 }) =>
     };
 
     return (
-        <div className="relative flex justify-center items-center p-4">
+        <div className="relative flex justify-center items-center p-0">
             <svg
                 width={size}
                 height={size}
@@ -355,7 +355,12 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 300 }) =>
                 style={{ width: radius * 1.5, height: radius * 1.5 }}
             >
                 {chordName !== '--' && chordOptions[selectedOptionIndex] && (
-                    <div className="text-6xl font-bold text-white drop-shadow-lg">
+                    <div
+                        className="font-bold text-white drop-shadow-lg transition-all duration-200"
+                        style={{
+                            fontSize: `${Math.max(2.5, 5 - (chordName.length * 0.15))}rem`
+                        }}
+                    >
                         <ChordSymbol option={chordOptions[selectedOptionIndex]} />
                     </div>
                 )}
