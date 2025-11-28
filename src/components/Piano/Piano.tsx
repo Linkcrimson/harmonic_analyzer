@@ -243,7 +243,7 @@ export const Piano = React.forwardRef<HTMLDivElement>((props, ref) => {
         <div className="w-full flex flex-col">
             <div
                 ref={ref}
-                className="overflow-x-auto hide-scroll pb-1 lg:pb-4 w-full flex justify-start lg:justify-center relative z-10 scroll-smooth"
+                className="overflow-x-auto hide-scroll pb-1 lg:pb-4 w-full flex justify-start lg:justify-center relative z-10"
             >
                 <div className="w-full flex justify-start lg:justify-center">
                     <div id="keyboard" className="flex relative select-none h-32 lg:h-48 w-full min-w-[750px] lg:min-w-0 lg:max-w-[800px]" style={{ touchAction: 'pan-x' }}>
