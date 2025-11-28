@@ -5,6 +5,8 @@ import { Controls } from './components/Controls';
 import { Piano } from './components/Piano/Piano';
 
 const AppContent: React.FC = () => {
+    const pianoScrollRef = React.useRef<HTMLDivElement>(null);
+
     return (
         <main className="w-full max-w-7xl p-2 md:p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 lg:gap-8 pb-[360px] lg:pb-6">
             {/* Left Column: Analysis (5 cols) */}
@@ -18,12 +20,12 @@ const AppContent: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-purple-900/10 pointer-events-none"></div>
 
                 <div className="w-full">
-                    <Controls />
+                    <Controls scrollContainerRef={pianoScrollRef} />
                 </div>
 
                 {/* Center Piano vertically in the remaining space, but biased towards top to match circle */}
                 <div className="flex-1 flex items-start justify-center w-full mt-4 lg:mt-24">
-                    <Piano />
+                    <Piano ref={pianoScrollRef} />
                 </div>
             </div>
         </main>
