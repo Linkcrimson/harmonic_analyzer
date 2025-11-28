@@ -12,7 +12,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
 
     // Configuration
     const center = size / 2;
-    const radius = size * 0.35; // Slightly smaller to fit labels
+    const radius = size * 0.39; // Maximized to fit labels tightly
 
     // Helper to get color based on interval type
     const getColor = (type: string | undefined) => {
@@ -162,8 +162,8 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
     return (
         <div className="relative flex justify-center items-center p-0">
             <svg
-                width={size}
-                height={size}
+                width="100%"
+                height="100%"
                 viewBox={`0 0 ${size} ${size}`}
                 onMouseLeave={handleMouseLeave}
             >
