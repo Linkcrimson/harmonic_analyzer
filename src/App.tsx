@@ -4,6 +4,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { AnalysisView } from './components/Analysis/AnalysisView';
 import { Controls } from './components/Controls';
 import { Piano } from './components/Piano/Piano';
+import { UpdateManager } from './components/UpdateManager';
 
 const AppContent: React.FC = () => {
     const pianoScrollRef = React.useRef<HTMLDivElement>(null);
@@ -38,6 +39,7 @@ export const App: React.FC = () => {
         <ThemeProvider>
             <HarmonicProvider>
                 <div className="min-h-screen flex flex-col items-center p-2 md:p-4 bg-[#0a0a0a] text-[#e0e0e0]">
+                    <UpdateManager />
                     <AppContent />
                 </div>
             </HarmonicProvider>
