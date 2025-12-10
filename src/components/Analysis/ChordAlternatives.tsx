@@ -6,7 +6,8 @@ export const ChordAlternatives: React.FC = () => {
     const [isExpanded, setIsExpanded] = useState(false);
     const VISIBLE_LIMIT = 3;
 
-    if (chordOptions.length === 0) return null;
+    // if (chordOptions.length === 0) return null; // Removed to prevent layout shift
+
 
     return (
         <div className="flex flex-wrap justify-center lg:justify-start gap-2 mt-4 min-h-[2rem]">

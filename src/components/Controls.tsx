@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useHarmonic } from '../context/HarmonicContext';
+import { useHarmonic, AudioMode } from '../context/HarmonicContext';
 import { OscillatorType } from '../hooks/useAudio';
 
 const waveforms: OscillatorType[] = ['sine', 'triangle', 'square', 'sawtooth'];
@@ -15,11 +15,11 @@ const WaveformIcon: React.FC<{ type: OscillatorType }> = ({ type }) => {
 };
 
 interface ControlsProps {
-    scrollContainerRef?: React.RefObject<HTMLDivElement>;
+    scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export const Controls: React.FC<ControlsProps> = ({ scrollContainerRef }) => {
-    const { currentWaveform, setWaveform, playCurrentChord, reset } = useHarmonic();
+    const { currentWaveform, setWaveform, playCurrentChord, reset, audioMode, setAudioMode } = useHarmonic();
     const [isScrolling, setIsScrolling] = useState(false);
     const startX = useRef(0);
     const startScrollLeft = useRef(0);
@@ -58,6 +58,7 @@ export const Controls: React.FC<ControlsProps> = ({ scrollContainerRef }) => {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
         >
+
             {/* Animated Background Gradient for Feedback */}
             <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-[#333] to-transparent opacity-30 pointer-events-none transition-transform duration-300 ${isScrolling ? 'scale-x-150' : 'scale-x-100 opacity-0'}`} />
 
@@ -80,6 +81,40 @@ export const Controls: React.FC<ControlsProps> = ({ scrollContainerRef }) => {
                     </svg>
                 </button>
 
+                {/* Audio Mode Toggle */}
+                <button
+                    onClick={() => {
+                        const modes: AudioMode[] = ['short', 'repeat', 'continuous'];
+                        const nextIndex = (modes.indexOf(audioMode) + 1) % modes.length;
+                        setAudioMode(modes[nextIndex]);
+                    }}
+                    className="h-10 w-10 rounded-full bg-[#161616] text-gray-400 hover:text-white border border-[#333] hover:border-gray-500 flex items-center justify-center transition-colors focus:outline-none shadow-sm"
+                    title={`Modalità Audio: ${audioMode === 'short' ? 'Breve' : audioMode === 'repeat' ? 'Ripeti' : 'Continuo'}`}
+                >
+                    {audioMode === 'short' && (
+                        // Dot (Breve)
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="12" r="4" />
+                        </svg>
+                    )}
+                    {audioMode === 'repeat' && (
+                        // Dashed Line (Ripeti)
+                        <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                            <path d="M4 12h3" />
+                            <path d="M10.5 12h3" />
+                            <path d="M17 12h3" />
+                        </svg>
+                    )}
+                    {audioMode === 'continuous' && (
+                        // Continuous Line (Continuo)
+                        <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                            <path d="M4 12h16" />
+                        </svg>
+                    )}
+                </button>
+
+
+
                 {/* Play Button */}
                 <button onClick={playCurrentChord}
                     className="h-10 w-10 rounded-full bg-[#222] text-white hover:bg-[#333] border border-[#333] flex items-center justify-center shadow-sm transition active:scale-95"
@@ -101,6 +136,7 @@ export const Controls: React.FC<ControlsProps> = ({ scrollContainerRef }) => {
                             clipRule="evenodd" />
                     </svg>
                 </button>
+
             </div>
         </div>
     );

@@ -1,5 +1,6 @@
 import React from 'react';
 import { HarmonicProvider } from './context/HarmonicContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { AnalysisView } from './components/Analysis/AnalysisView';
 import { Controls } from './components/Controls';
 import { Piano } from './components/Piano/Piano';
@@ -34,10 +35,12 @@ const AppContent: React.FC = () => {
 
 export const App: React.FC = () => {
     return (
-        <HarmonicProvider>
-            <div className="min-h-screen flex flex-col items-center p-2 md:p-4 bg-[#0a0a0a] text-[#e0e0e0]">
-                <AppContent />
-            </div>
-        </HarmonicProvider>
+        <ThemeProvider>
+            <HarmonicProvider>
+                <div className="min-h-screen flex flex-col items-center p-2 md:p-4 bg-[#0a0a0a] text-[#e0e0e0]">
+                    <AppContent />
+                </div>
+            </HarmonicProvider>
+        </ThemeProvider>
     );
 };

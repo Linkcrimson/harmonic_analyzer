@@ -5,12 +5,14 @@ import { ChordHeader } from './ChordHeader';
 import { AnalysisGrid } from './AnalysisGrid';
 import { ChordAlternatives } from './ChordAlternatives';
 import { Header } from '../Header';
+import { SettingsModal } from '../SettingsModal';
 
 type ViewMode = 'circle' | 'cards';
 
 export const AnalysisView: React.FC = () => {
     const [viewMode, setViewMode] = useState<ViewMode>('circle');
-    const { activeNotes, analysis } = useHarmonic();
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const { activeNotes, analysis, forceBassAsRoot, toggleBassAsRoot } = useHarmonic();
 
     // --- Dynamic Icon Logic ---
 
@@ -18,11 +20,11 @@ export const AnalysisView: React.FC = () => {
     const cardsIconColors = useMemo(() => {
         const { flags } = analysis;
         return {
-            root: flags.isRootActive ? '#81c784' : '#333',
-            quality: flags.isThirdActive ? '#64b5f6' : '#333',
-            stability: flags.isFifthActive ? '#e57373' : '#333',
-            func: flags.isSeventhActive ? '#ffd54f' : '#333',
-            ext: analysis.extensions.length > 0 ? '#ba68c8' : '#333'
+            root: flags.isRootActive ? 'var(--col-root)' : '#333',
+            quality: flags.isThirdActive ? 'var(--col-third)' : '#333',
+            stability: flags.isFifthActive ? 'var(--col-fifth)' : '#333',
+            func: flags.isSeventhActive ? 'var(--col-seventh)' : '#333',
+            ext: analysis.extensions.length > 0 ? 'var(--col-ext)' : '#333'
         };
     }, [analysis]);
 
@@ -32,11 +34,11 @@ export const AnalysisView: React.FC = () => {
 
         const getColor = (type: string | undefined) => {
             switch (type) {
-                case 'root': return '#81c784';
-                case 'third': return '#64b5f6';
-                case 'fifth': return '#e57373';
-                case 'seventh': return '#ffd54f';
-                case 'ext': return '#ba68c8';
+                case 'root': return 'var(--col-root)';
+                case 'third': return 'var(--col-third)';
+                case 'fifth': return 'var(--col-fifth)';
+                case 'seventh': return 'var(--col-seventh)';
+                case 'ext': return 'var(--col-ext)';
                 default: return '#e0e0e0';
             }
         };
@@ -80,31 +82,91 @@ export const AnalysisView: React.FC = () => {
                     <Header />
                 </div>
 
-                {/* Toggle Button */}
-                <button
-                    onClick={() => setViewMode(prev => prev === 'circle' ? 'cards' : 'circle')}
-                    className="ml-4 p-2 rounded-xl bg-[#1a1a1a] border border-[#333] hover:bg-[#252525] transition-colors group"
-                    title={viewMode === 'circle' ? "Visualizza Schede" : "Visualizza Cerchio"}
-                >
-                    {viewMode === 'circle' ? (
-                        // Show "Cards" Icon
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <rect x="2" y="2" width="9" height="9" rx="2" fill={cardsIconColors.root} />
-                            <rect x="13" y="2" width="9" height="9" rx="2" fill={cardsIconColors.quality} />
-                            <rect x="2" y="13" width="9" height="9" rx="2" fill={cardsIconColors.stability} />
-                            <rect x="13" y="13" width="9" height="9" rx="2" fill={cardsIconColors.func} />
-                            {/* Small bar for extensions if needed, or just the 4 grid items */}
+                <div className="flex items-center gap-2">
+                    {/* Bass as Root Toggle */}
+                    <button
+                        onClick={toggleBassAsRoot}
+                        className={`p-2 rounded-xl border transition-all group ${forceBassAsRoot
+                            ? 'bg-blue-900/40 border-blue-500 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
+                            : 'bg-[#1a1a1a] border-[#333] hover:bg-[#252525] text-gray-400'
+                            }`}
+                        title={forceBassAsRoot ? "Basso = Fondamentale (Bass Locked)" : "Fondamentale Automatica (Smart Root)"}
+                    >
+                        {/* Variant 3: The Signal (Integrated SVG with transition classes) */}
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-all duration-300">
+                            {/* Top Shape (The Chord/Root) */}
+                            <circle
+                                cx="12" cy="8" r={forceBassAsRoot ? "4" : "5.5"}
+                                fill={forceBassAsRoot ? "none" : "currentColor"}
+                                stroke={forceBassAsRoot ? "currentColor" : "none"}
+                                strokeWidth={forceBassAsRoot ? "2" : "0"}
+                                className="transition-all duration-500 ease-out"
+                            />
+
+                            {/* Bottom Bar (The Bass) */}
+                            <rect
+                                x="4" y={forceBassAsRoot ? "15" : "16"}
+                                width="16" height={forceBassAsRoot ? "6" : "4"}
+                                rx="2"
+                                fill={forceBassAsRoot ? "currentColor" : "none"}
+                                stroke={forceBassAsRoot ? "none" : "currentColor"}
+                                strokeWidth={forceBassAsRoot ? "0" : "2"}
+                                className="transition-all duration-500 ease-out"
+                            />
+
+                            {/* Link (Slash) - Visible in Smart Mode */}
+                            <line
+                                x1="12" y1="12" x2="12" y2="16"
+                                stroke="currentColor"
+                                strokeWidth="1"
+                                strokeDasharray="2 2"
+                                className={`transition-opacity duration-300 ${forceBassAsRoot ? 'opacity-0' : 'opacity-40'}`}
+                            />
                         </svg>
-                    ) : (
-                        // Show "Circle" Icon
-                        <svg width="24" height="24" viewBox="0 0 20 20">
-                            <circle cx="10" cy="10" r="9" stroke="#555" strokeWidth="1.5" fill="none" />
-                            {circleIconPoints.map((p, i) => (
-                                <circle key={i} cx={p.x} cy={p.y} r="1.5" fill={p.color} />
-                            ))}
+                    </button>
+
+                    {/* View Mode Toggle */}
+                    <button
+                        onClick={() => setViewMode(prev => prev === 'circle' ? 'cards' : 'circle')}
+                        className={`p-2 rounded-xl border transition-colors group ${viewMode === 'cards'
+                            ? 'bg-[#1a1a1a] border-[#333] hover:bg-[#252525]'
+                            : 'bg-[#1a1a1a] border-[#333] hover:bg-[#252525]'
+                            }`} // Can add active state styles if desired
+                        title={viewMode === 'circle' ? "Visualizza Schede" : "Visualizza Cerchio"}
+                    >
+                        {viewMode === 'circle' ? (
+                            // Show "Cards" Icon
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <rect x="2" y="2" width="9" height="9" rx="2" fill={cardsIconColors.root} />
+                                <rect x="13" y="2" width="9" height="9" rx="2" fill={cardsIconColors.quality} />
+                                <rect x="2" y="13" width="9" height="9" rx="2" fill={cardsIconColors.stability} />
+                                <rect x="13" y="13" width="9" height="9" rx="2" fill={cardsIconColors.func} />
+                            </svg>
+                        ) : (
+                            // Show "Circle" Icon
+                            <svg width="24" height="24" viewBox="0 0 20 20">
+                                <circle cx="10" cy="10" r="9" stroke="#555" strokeWidth="1.5" fill="none" />
+                                {circleIconPoints.map((p, i) => (
+                                    <circle key={i} cx={p.x} cy={p.y} r="1.5" fill={p.color} />
+                                ))}
+                            </svg>
+                        )}
+                    </button>
+
+                    {/* Settings Button */}
+                    <button
+                        onClick={() => setIsSettingsOpen(true)}
+                        className="p-2 rounded-xl bg-[#1a1a1a] border border-[#333] hover:bg-[#252525] text-gray-400 hover:text-white transition-colors"
+                        title="Impostazioni"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                    )}
-                </button>
+                    </button>
+
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                </div>
             </div>
 
             {/* Main Content Area */}

@@ -156,5 +156,20 @@ export const useAudio = () => {
         return 440 * Math.pow(2, (midiNote - 69) / 12);
     }, []);
 
-    return { initAudio, startNote, stopNote, playTone, getFrequency };
+    const setNoteVolume = useCallback((noteId: number, volume: number) => {
+        const activeNote = activeOscillators.current.get(noteId);
+        if (activeNote && audioCtxRef.current) {
+            const { gain } = activeNote;
+            const ctx = audioCtxRef.current;
+            const now = ctx.currentTime;
+            const sustain = 0.7; // Match startNote sustain level
+
+            // Smooth ramp to new volume
+            gain.gain.cancelScheduledValues(now);
+            gain.gain.setValueAtTime(gain.gain.value, now);
+            gain.gain.linearRampToValueAtTime(volume * sustain, now + 0.1);
+        }
+    }, []);
+
+    return { initAudio, startNote, stopNote, playTone, getFrequency, setNoteVolume };
 };

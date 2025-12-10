@@ -99,6 +99,73 @@ body {
 
 /* Neon Themes */
 :root {
+    /* DEFAULT THEME: Alchemy Fluo */
+    --col-root: #81c784;
+    --col-third: #64b5f6;
+    --col-fifth: #e57373;
+    --col-seventh: #ffd54f;
+    --col-ext: #ba68c8;
+}
+
+[data-theme='deuteranopia'] {
+    /* COLORBLIND THEME: Deuteranopia Friendly (Okabe-Ito inspired) */
+    --col-root: #56B4E9;
+    /* Sky Blue */
+    --col-third: #F0E442;
+    /* Yellow */
+    --col-fifth: #D55E00;
+    /* Vermilion */
+    --col-seventh: #E69F00;
+    /* Orange */
+    --col-ext: #CC79A7;
+    /* Reddish Purple */
+}
+
+[data-theme='protanopia'] {
+    /* COLORBLIND THEME: Protanopia Friendly (Blue/Yellow heavy) */
+    --col-root: #4477AA;
+    /* Blue */
+    --col-third: #DDCC77;
+    /* Sand */
+    --col-fifth: #CC6677;
+    /* Rose */
+    --col-seventh: #117733;
+    /* Green (High contrast vs red) */
+    --col-ext: #88CCEE;
+    /* Cyan */
+}
+
+[data-theme='tritanopia'] {
+    /* COLORBLIND THEME: Tritanopia Friendly (Red/Cyan heavy) */
+    --col-root: #CC6677;
+    /* Rose */
+    --col-third: #117733;
+    /* Green */
+    --col-fifth: #DDCC77;
+    /* Sand */
+    --col-seventh: #88CCEE;
+    /* Cyan */
+    --col-ext: #332288;
+    /* Indigo */
+}
+
+[data-theme='high_contrast'] {
+    /* HIGH CONTRAST THEME: Vibrant colors visible on both Black & White keys */
+    --col-root: #FF1493;
+    /* Deep Pink */
+    --col-third: #00BFFF;
+    /* Deep Sky Blue */
+    --col-fifth: #FFD700;
+    /* Gold */
+    --col-seventh: #32CD32;
+    /* Lime Green */
+    --col-ext: #FF4500;
+    /* Orange Red */
+}
+
+/* Custom theme will be handled via inline styles injected by JS, 
+   but we can set a fallback here just in case */
+[data-theme='custom'] {
     --col-root: #81c784;
     --col-third: #64b5f6;
     --col-fifth: #e57373;
