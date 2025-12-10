@@ -632,6 +632,8 @@ export class positionVector {
           intervalTypes.add("6min");
         } else if (shiftedData[i] == 9) {
           intervalTypes.add("6");
+        } else if (shiftedData[i] == 10) {
+          intervalTypes.add("6aug");
         }
       }
     }

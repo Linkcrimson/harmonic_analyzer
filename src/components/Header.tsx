@@ -1,7 +1,7 @@
 import { useHarmonic } from '../context/HarmonicContext';
 
 export const Header: React.FC = () => {
-    const { midiConnected, sustainPedal, forceBassAsRoot, toggleBassAsRoot } = useHarmonic();
+    const { midiConnected, sustainPedal } = useHarmonic();
 
     return (
         <div className="flex justify-between items-center px-2">
@@ -22,18 +22,6 @@ export const Header: React.FC = () => {
                         </div>
                     )}
                 </div>
-            </div>
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={toggleBassAsRoot}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${forceBassAsRoot
-                        ? 'bg-blue-500 text-white border-blue-600 hover:bg-blue-600'
-                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                        }`}
-                    title="Forza la nota più bassa come fondamentale (disabilita rivolti)"
-                >
-                    Bass as Root
-                </button>
             </div>
         </div>
     );

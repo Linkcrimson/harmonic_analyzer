@@ -1125,6 +1125,7 @@ export function analyzeChord(
     if (iTCandidate.has("4aug")) extensions.push("#11");
     if (iTCandidate.has("6min")) extensions.push("b13");
     if (iTCandidate.has("6") && !seventhQuality.includes("Sesta")) extensions.push("13");
+    if (iTCandidate.has("6aug")) extensions.push("#13");
 
     const detailedAnalysis = {
       thirdQuality,
