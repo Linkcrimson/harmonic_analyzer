@@ -85,6 +85,7 @@ const Key: React.FC<KeyProps> = memo(({ id, isActive, intervalType, label, black
     };
 
     const handleTouchStart = (e: React.TouchEvent) => {
+        lastTouchTime.current = Date.now();
         startPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         isScrolling.current = false;
     };

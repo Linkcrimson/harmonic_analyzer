@@ -10,8 +10,8 @@ export default defineConfig({
             registerType: 'autoUpdate',
             includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
             manifest: {
-                name: 'Harmonic Analyzer',
-                short_name: 'Harmonic',
+                name: 'Chord Analyzer',
+                short_name: 'Chord Analyzer',
                 description: 'Advanced music theory analysis tool',
                 theme_color: '#ffffff',
                 icons: [
