@@ -232,7 +232,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                     <label className="text-xs text-gray-400">Maggiore (Major)</label>
                                     <div className="grid grid-cols-2 gap-2">
                                         {[
-                                            { val: 'Δ', label: 'Δ' },
+                                            { val: '∆', label: '∆' },
                                             { val: 'maj', label: 'maj' }
                                         ].map((opt) => (
                                             <button
