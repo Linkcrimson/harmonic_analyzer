@@ -1,4 +1,4 @@
-import { scaleNames } from "./chord";
+import { spellingNotes } from "./chord";
 import { positionVector } from "./positionVector";
 
 const scalePool = [
@@ -67,7 +67,7 @@ const scalePool = [
     degrees: [0, 3, 5, 6, 7, 10],
   },
 ];
-  
+
 /**
  * Generates all possible combinations of an array's elements (including null values) 
  * such that the resulting combinations have a fixed length and include all elements 
@@ -82,7 +82,7 @@ const scalePool = [
  */
 function generateCombinations<T>(arr: T[], n: number): (T | null)[][] {
   if (n < arr.length) {
-      throw new Error("n must be greater than or equal to the length of the input array.");
+    throw new Error("n must be greater than or equal to the length of the input array.");
   }
 
   const m = arr.length; // The length of the input array.
@@ -95,44 +95,44 @@ function generateCombinations<T>(arr: T[], n: number): (T | null)[][] {
    * @param {number} index - The current index in the input array being processed.
    */
   function backtrack(
-      current: (T | null)[],
-      index: number
+    current: (T | null)[],
+    index: number
   ): void {
-      // If the combination has reached the desired length
-      if (current.length === n) {
-          // Check if all elements of the input array are included
-          const includesAll = arr.every((element) => current.includes(element));
-          if (includesAll) {
-              combinations.push([...current]); // Add the combination to the results
-          }
-          return;
+    // If the combination has reached the desired length
+    if (current.length === n) {
+      // Check if all elements of the input array are included
+      const includesAll = arr.every((element) => current.includes(element));
+      if (includesAll) {
+        combinations.push([...current]); // Add the combination to the results
       }
+      return;
+    }
 
-      // Add an element from the input array and recurse
-      if (index < m) {
-          current.push(arr[index]);
-          backtrack(current, index + 1);
-          current.pop(); // Backtrack by removing the last added element
-      }
+    // Add an element from the input array and recurse
+    if (index < m) {
+      current.push(arr[index]);
+      backtrack(current, index + 1);
+      current.pop(); // Backtrack by removing the last added element
+    }
 
-      // Add a null value and recurse
-      current.push(null);
-      backtrack(current, index); // Index remains the same because null is not part of the input array
-      current.pop(); // Backtrack by removing the null
+    // Add a null value and recurse
+    current.push(null);
+    backtrack(current, index); // Index remains the same because null is not part of the input array
+    current.pop(); // Backtrack by removing the null
   }
 
   backtrack([], 0); // Start the recursive process with an empty combination
   return combinations;
 }
 
-  /**
- * Aligns two scales by matching their degrees and positioning them correctly
- * at the same index based on the degree they represent.
- *
- * @param {positionVector} scaleA - The input scale to be analyzed.
- * @param {positionVector} scaleB - The reference scale for alignment.
- * @returns {[(number | null)[], (number | null)[]]} - Two aligned arrays: `alignedA` and `alignedB`.
- */
+/**
+* Aligns two scales by matching their degrees and positioning them correctly
+* at the same index based on the degree they represent.
+*
+* @param {positionVector} scaleA - The input scale to be analyzed.
+* @param {positionVector} scaleB - The reference scale for alignment.
+* @returns {[(number | null)[], (number | null)[]]} - Two aligned arrays: `alignedA` and `alignedB`.
+*/
 function alignScales(
   scaleA: positionVector,
   scaleB: positionVector
@@ -265,7 +265,7 @@ function alignScales(
  * @returns {string} - The name of the closest scale and any variations.
  */
 function findScaleName(scaleInput: positionVector): string {
-  const rootNote = scaleNames(scaleInput)[0]!;
+  const rootNote = spellingNotes(scaleInput)[0]!;
 
   // Normalize the input scale.
   const normalizedInput = scaleInput.toZero();

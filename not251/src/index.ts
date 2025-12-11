@@ -12,6 +12,7 @@ import {
   VoiceRange,
   VoiceRanges,
   getChordName,
+  spellingNotes
 } from "./chord";
 //import { autoGrado, autoRoot } from "./auto";
 import { transpose } from "./quantize";

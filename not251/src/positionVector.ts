@@ -252,7 +252,7 @@ export class positionVector {
 
   let index_chord = inverse_select(chordNotes, scala);
 
-  let nomi_scala = scaleNames(scala);
+  let nomi_scala = spellingNotes(scala);
 
   for (let i = 0; i < index_chord.data.length; i++) {
     console.log(nomi_scala[index_chord.data[i]]);

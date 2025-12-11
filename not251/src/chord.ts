@@ -1097,7 +1097,7 @@ export function analyzeChord(
     // Determine inversion if applicable and if slash chords are allowed
     if (allowSlashChords && i !== 0) {
       const bassIndex = modulo(chord.data.length - i, chord.data.length);
-      inversion = `/${scaleNames(candidate, false, false, true)[bassIndex]}`;
+      inversion = `/${spellingNotes(candidate, false, false, true)[bassIndex]}`;
     }
 
     // Detailed Analysis for UI
@@ -1238,12 +1238,12 @@ export function getChordName(
 ) {
   const analysis = analyzeChord(chordVector, allowSlashChords);
 
-  // Generate the chord name using scaleNames for the output
-  const rootName = scaleNames(analysis.root, false, false)[0];
+  // Generate the chord name using spellingNotes for the output
+  const rootName = spellingNotes(analysis.root, false, false)[0];
   const chordName = `${rootName}${analysis.base}${Array.isArray(analysis.quality) && analysis.quality.length > 0 ? analysis.quality.join("") : ""}${analysis.inversion}`;
 
   const options = analysis.options.map(opt => {
-    const rootNameOpt = scaleNames(opt[0], false, false)[0];
+    const rootNameOpt = spellingNotes(opt[0], false, false)[0];
     const base = opt[1];
     const quality = Array.isArray(opt[2]) ? opt[2] : [];
     const qualityStr = quality.length > 0 ? quality.join("") : "";
@@ -1280,7 +1280,7 @@ export function getChordName(
 
 //andrebbe aggiornata questa funzione in positionVector
 /**
- * Function: scaleNames
+ * Function: spellingNotes
  *
  * Generates an array of strings representing the names of the notes in a musical scale.
  * The function adjusts the notes based on their position relative to a standard scale,
@@ -1292,7 +1292,7 @@ export function getChordName(
  * @param {boolean} [checkEnharmonic=true] - Whether to enable adjustments for enharmonic equivalents.
  * @returns {string[]} - An array of note names with appropriate alterations or deviations.
  */
-export function scaleNames(
+export function spellingNotes(
   scala: positionVector,
   ita: boolean = true,
   useCents: boolean = false,
@@ -1334,39 +1334,40 @@ export function scaleNames(
   }
   let preDegrees = finalScale.getDegrees();
   // Get degrees and prepare for enharmonic adjustment
-  let noteDegrees1 = preDegrees;
-  let noteDegrees2 = preDegrees;
-  let steps1 = [];
-  let steps2 = [];
-  let runningTotal1 = 0;
-  let runningTotal2 = 0;
+  // Choose the best set of adjustments based on total deviation
+  let bestSteps: number[] = [];
+  let bestNoteDegrees = preDegrees;
+  let minDeviation = Infinity;
+  let bestIndex = index;
 
-  for (let i = 0; i < finalScale.data.length; i++) {
-    const oct =
-      Math.floor(
-        (finalScale.data[i] - finalScale.data[0]) / finalScale.modulo
-      ) * 7;
+  // Check offsets -1, 0, +1 to find the best alignment (minimizing alterations)
+  for (let offset = -1; offset <= 1; offset++) {
+    let currentSteps: number[] = [];
+    let currentDeviation = 0;
+    let currentIndex = index + offset;
 
-    // Calculate deviations for the first check
-    steps1[i] =
-      finalScale.data[i] - lcmStandard.element(noteDegrees1[i] + index + oct);
-    runningTotal1 += steps1[i];
+    for (let i = 0; i < finalScale.data.length; i++) {
+      const oct =
+        Math.floor(
+          (finalScale.data[i] - finalScale.data[0]) / finalScale.modulo
+        ) * 7;
 
-    // Calculate deviations for the second check
-    steps2[i] =
-      finalScale.data[i] -
-      lcmStandard.element(noteDegrees2[i] + index + oct + 1);
-    runningTotal2 += steps2[i];
+      const deviation = finalScale.data[i] - lcmStandard.element(preDegrees[i] + currentIndex + oct);
+      currentSteps[i] = deviation;
+      currentDeviation += deviation;
+    }
+
+    if (Math.abs(currentDeviation) < Math.abs(minDeviation)) {
+      minDeviation = currentDeviation;
+      bestSteps = currentSteps;
+      bestIndex = currentIndex;
+    }
   }
 
-  // Choose the best set of adjustments based on total deviation
-  let steps =
-    Math.abs(runningTotal1) <= Math.abs(runningTotal2) ? steps1 : steps2;
-  let noteDegrees =
-    Math.abs(runningTotal1) <= Math.abs(runningTotal2)
-      ? noteDegrees1
-      : noteDegrees2;
-  if (Math.abs(runningTotal1) > Math.abs(runningTotal2)) index++;
+  let steps = bestSteps;
+  let noteDegrees = bestNoteDegrees;
+  index = bestIndex;
+
 
   if (checkEnharmonic) {
     for (let i = 0; i < steps.length; i++) {
