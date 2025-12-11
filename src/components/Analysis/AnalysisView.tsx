@@ -174,7 +174,7 @@ export const AnalysisView: React.FC = () => {
                 {viewMode === 'circle' ? (
                     <div className="flex-1 flex justify-center items-center">
                         {/* Pass a responsive size or handle it via CSS in HarmonicCircle */}
-                        <div className="w-full max-w-[320px] md:max-w-[440px] aspect-square">
+                        <div className="w-full max-w-[320px] md:max-w-[440px] aspect-square mt-8 md:mt-0">
                             {/* We might need to make HarmonicCircle responsive. For now, let's try a fixed size that fits or 100% */}
                             <HarmonicCircle size={420} />
                         </div>
