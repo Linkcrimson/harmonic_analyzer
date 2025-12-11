@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useHarmonic, InputMode } from '../context/HarmonicContext';
 import { usePWA } from '../context/PWAContext';
+import { useNotation } from '../context/NotationContext';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -13,7 +14,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     const { theme, setTheme, customColors, setCustomColors } = useTheme();
     const { inputMode, setInputMode } = useHarmonic();
     const { isInstalled, needRefresh, updateServiceWorker, installApp, canInstall, hardReset } = usePWA();
-    const [activeTab, setActiveTab] = React.useState<'appearance' | 'input' | 'install'>('input');
+    const { settings: notationSettings, updateSettings: updateNotationSettings } = useNotation();
+    const [activeTab, setActiveTab] = React.useState<'appearance' | 'input' | 'install' | 'notation'>('input');
 
     if (!isOpen) return null;
 
@@ -37,6 +39,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     >
                         Input
                         {activeTab === 'input' && (
+                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 rounded-t-full"></div>
+                        )}
+                    </button>
+                    <button
+                        className={`flex-1 pb-3 text-sm font-medium transition-colors relative ${activeTab === 'notation' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                        onClick={() => setActiveTab('notation')}
+                    >
+                        Notazione
+                        {activeTab === 'notation' && (
                             <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 rounded-t-full"></div>
                         )}
                     </button>
@@ -206,6 +217,172 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                         </div>
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'notation' && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="space-y-4">
+                                <label className="block text-sm font-medium text-gray-400 mb-1">Stile Simboli Accordi</label>
+                                <p className="text-xs text-gray-500 mb-4">Personalizza come vengono visualizzati i simboli degli accordi.</p>
+
+                                {/* Major */}
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-400">Maggiore (Major)</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { val: 'Δ', label: 'Δ' },
+                                            { val: 'maj', label: 'maj' }
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.val}
+                                                onClick={() => updateNotationSettings({ major: opt.val as any })}
+                                                className={`p-3 rounded-xl border text-sm font-medium transition-all ${notationSettings.major === opt.val
+                                                    ? 'bg-blue-900/20 border-blue-500 text-white'
+                                                    : 'bg-[#222] border-[#333] text-gray-400 hover:border-gray-500'
+                                                    }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Minor */}
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-400">Minore (Minor)</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[
+                                            { val: '-', label: '-' },
+                                            { val: 'min', label: 'min' },
+                                            { val: 'm', label: 'm' }
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.val}
+                                                onClick={() => updateNotationSettings({ minor: opt.val as any })}
+                                                className={`p-3 rounded-xl border text-sm font-medium transition-all ${notationSettings.minor === opt.val
+                                                    ? 'bg-blue-900/20 border-blue-500 text-white'
+                                                    : 'bg-[#222] border-[#333] text-gray-400 hover:border-gray-500'
+                                                    }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Diminished */}
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-400">Diminuito (Diminished)</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[
+                                            { val: '°', label: '°' },
+                                            { val: 'dim', label: 'dim' },
+                                            { val: 'dynamic', label: `${notationSettings.minor}${notationSettings.accidental}5` }
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.val}
+                                                onClick={() => updateNotationSettings({ diminished: opt.val as any })}
+                                                className={`p-3 rounded-xl border text-sm font-medium transition-all ${notationSettings.diminished === opt.val
+                                                    ? 'bg-blue-900/20 border-blue-500 text-white'
+                                                    : 'bg-[#222] border-[#333] text-gray-400 hover:border-gray-500'
+                                                    }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Augmented */}
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-400">Aumentato (Augmented)</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { val: '+', label: '+' },
+                                            { val: 'aug', label: 'aug' }
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.val}
+                                                onClick={() => updateNotationSettings({ augmented: opt.val as any })}
+                                                className={`p-3 rounded-xl border text-sm font-medium transition-all ${notationSettings.augmented === opt.val
+                                                    ? 'bg-blue-900/20 border-blue-500 text-white'
+                                                    : 'bg-[#222] border-[#333] text-gray-400 hover:border-gray-500'
+                                                    }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Half-Diminished */}
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-400">Semidiminuito (Half-Diminished)</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { val: 'ø', label: 'ø' },
+                                            { val: 'dynamic', label: `${notationSettings.minor}7${notationSettings.accidental}5` }
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.val}
+                                                onClick={() => updateNotationSettings({ halfDiminished: opt.val as any })}
+                                                className={`p-3 rounded-xl border text-sm font-medium transition-all ${notationSettings.halfDiminished === opt.val
+                                                    ? 'bg-blue-900/20 border-blue-500 text-white'
+                                                    : 'bg-[#222] border-[#333] text-gray-400 hover:border-gray-500'
+                                                    }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Accidentals */}
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-400">Alterazioni (Accidentals)</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { val: '♭', label: '♭ / ♯' },
+                                            { val: 'b', label: 'b / #' }
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.val}
+                                                onClick={() => updateNotationSettings({ accidental: opt.val as any })}
+                                                className={`p-3 rounded-xl border text-sm font-medium transition-all ${notationSettings.accidental === opt.val
+                                                    ? 'bg-blue-900/20 border-blue-500 text-white'
+                                                    : 'bg-[#222] border-[#333] text-gray-400 hover:border-gray-500'
+                                                    }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Omit */}
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-400">Omissioni (Omit/No)</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { val: 'omit', label: 'omit (Comit3)' },
+                                            { val: 'no', label: 'no (Cno3)' }
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.val}
+                                                onClick={() => updateNotationSettings({ omit: opt.val as any })}
+                                                className={`p-3 rounded-xl border text-sm font-medium transition-all ${notationSettings.omit === opt.val
+                                                    ? 'bg-blue-900/20 border-blue-500 text-white'
+                                                    : 'bg-[#222] border-[#333] text-gray-400 hover:border-gray-500'
+                                                    }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     )}

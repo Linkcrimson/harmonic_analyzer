@@ -1,4 +1,6 @@
 import React from 'react';
+import { useNotation } from '../../context/NotationContext';
+import { formatChordName } from '../../utils/chordNotation';
 
 interface ChordSymbolProps {
     option: any;
@@ -6,11 +8,18 @@ interface ChordSymbolProps {
 }
 
 export const ChordSymbol: React.FC<ChordSymbolProps> = ({ option, className = "" }) => {
+    const { settings } = useNotation();
+
     if (!option) return <span>--</span>;
 
     const { components } = option;
     const { rootName, quality } = components;
     let { base } = components;
+
+    // Apply formatting to Base
+    // We treat base as a partial chord name for replacement purposes
+    // Major/Minor/Dim/Aug usually live here.
+    base = formatChordName(base, settings);
 
     // Root Name with Accidentals
     const renderRoot = (name: string) => {
@@ -30,20 +39,25 @@ export const ChordSymbol: React.FC<ChordSymbolProps> = ({ option, className = ""
         return <span>{name}</span>;
     };
 
-    // Base with Diminished/Half-Diminished symbol
-    // Move b5 from quality to base
+
     const displayQuality = [...quality];
-    const b5Index = displayQuality.indexOf("♭5");
-    if (b5Index !== -1) {
-        displayQuality.splice(b5Index, 1);
-        base += "♭5";
-    }
-    base = base.replace("dim", "°");
+
+    // Special handling for Half-Diminished if setting is NOT ø
+    // not251 might represent half-dim as base="ø" or base="min" quality=["7", "b5"]
+    // If base is "ø", formatChordName handles it.
+    // If base is "min" and quality has "7","b5", we might want to check.
+
+    // Check if we need to unify "min7b5" into the base if the user selected a block style like "-7b5"
+    // Ideally formatChordName handles string replacement, but here we have components.
+
+    // For now, let's trust formatChordName on 'base'.
+    // And also potentially on quality items if they match 'omit' or 'aug' etc.
+    const formattedQuality = displayQuality.map(q => formatChordName(q, settings));
 
     const renderBase = (baseStr: string) => {
         if (!baseStr) return null;
 
-        // Handle diminished symbol specifically
+        // Handle diminished symbol specifically if it resulted in °
         if (baseStr.includes("°")) {
             const parts = baseStr.split("°");
             return (
@@ -58,8 +72,6 @@ export const ChordSymbol: React.FC<ChordSymbolProps> = ({ option, className = ""
         // Standard base (m, maj, etc.) - slightly smaller than root
         return <span className="text-[0.8em] font-medium ml-[0.05em]">{baseStr}</span>;
     };
-
-
 
     // Inversion
     const renderInversion = (inv: string) => {
@@ -101,9 +113,9 @@ export const ChordSymbol: React.FC<ChordSymbolProps> = ({ option, className = ""
             {/* Extensions and Inversions wrapper to keep them together if possible, or just flow */}
             <span className="inline-flex flex-col justify-start ml-[0.1em] -translate-y-[0.3em] align-top">
                 {/* Quality/Extensions */}
-                {displayQuality.length > 0 && (
+                {formattedQuality.length > 0 && (
                     <span className="inline-flex flex-wrap max-w-[120px]">
-                        {displayQuality.map((q, i) => (
+                        {formattedQuality.map((q, i) => (
                             <span key={i} className="text-[0.5em] font-medium leading-[0.9] tracking-tight mr-[0.1em]">
                                 {q}
                             </span>

@@ -4,6 +4,8 @@ import { useMidi } from '../hooks/useMidi';
 import { positionVector, inverse_select } from '../../not251/src/positionVector';
 import { getChordName, scaleNames } from '../../not251/src/chord';
 import { useKeyboardMidi } from '../hooks/useKeyboardMidi';
+import { useNotation } from './NotationContext';
+import { formatChordName } from '../utils/chordNotation';
 
 export const SMART_INPUT_LOCK_THRESHOLD_MS = 500;
 
@@ -69,6 +71,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [lockedNotes, setLockedNotes] = useState<Set<number>>(new Set());
     const inputStartTimes = useRef<Map<number, number>>(new Map());
     const repeatIntervalRef = useRef<number | null>(null);
+    const { settings: notationSettings } = useNotation();
 
     const toggleBassAsRoot = useCallback(() => {
         setForceBassAsRoot(prev => !prev);
@@ -479,8 +482,11 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         <HarmonicContext.Provider value={{
             activeNotes,
             currentWaveform,
-            chordName: chordOptions[selectedOptionIndex]?.chordName || '--',
-            chordOptions,
+            chordName: formatChordName(chordOptions[selectedOptionIndex]?.chordName || '--', notationSettings),
+            chordOptions: chordOptions.map(opt => ({
+                ...opt,
+                chordName: formatChordName(opt.chordName, notationSettings)
+            })),
             selectedOptionIndex,
             analysis,
             toggleNote,
