@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useAudio, OscillatorType } from '../hooks/useAudio';
 import { useMidi } from '../hooks/useMidi';
 import { positionVector, inverse_select } from '../../not251/src/positionVector';
-import { getChordName, scaleNames } from '../../not251/src/chord';
+import { getChordName, spellingNotes } from '../../not251/src/chord';
 import { useKeyboardMidi } from '../hooks/useKeyboardMidi';
 import { useNotation } from './NotationContext';
 import { formatChordName } from '../utils/chordNotation';
@@ -122,7 +122,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         let names: string[] = [];
         try {
-            names = scaleNames(chordVec, true, false, true, false);
+            names = spellingNotes(chordVec, true, false, true, false);
         } catch (e) {
             console.error(e);
         }
@@ -148,7 +148,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
             const rootIndex = inverse_select(root, chordVec).data[0];
             const rotatedVec = chordVec.rototranslate(rootIndex, chordVec.data.length, false);
-            const rotatedNames = scaleNames(rotatedVec, true, false, true, false);
+            const rotatedNames = spellingNotes(rotatedVec, true, false, true, false);
 
             const modulo = (n: number, m: number) => ((n % m) + m) % m;
             for (let i = 0; i < rotatedNames.length; i++) {
