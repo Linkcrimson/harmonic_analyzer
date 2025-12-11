@@ -929,7 +929,7 @@ export function analyzeChord(
     fifthQuality: string,
     seventhQuality: string,
     extensions: string[]
-  }][] = [];
+  }, string][] = [];
   let length = 1;
   if (allowSlashChords) {
     length = chord.data.length;
@@ -1134,8 +1134,10 @@ export function analyzeChord(
       extensions
     };
 
+    const contextRootName = spellingNotes(candidate, false, false, false)[0];
+
     // Store the chord components in an array
-    chordNames.push([root, chordBase, chordQuality, inversion, Array.from(iTCandidate), detailedAnalysis]);
+    chordNames.push([root, chordBase, chordQuality, inversion, Array.from(iTCandidate), detailedAnalysis, contextRootName]);
   }
 
   // Sort chord names based on the length of chordQuality
@@ -1217,6 +1219,7 @@ export function analyzeChord(
     inversion: bestChord[3],
     intervals: bestChord[4],
     detailedAnalysis: bestChord[5],
+    rootName: bestChord[6],
     options: chordNames
   };
 }
@@ -1239,11 +1242,11 @@ export function getChordName(
   const analysis = analyzeChord(chordVector, allowSlashChords);
 
   // Generate the chord name using spellingNotes for the output
-  const rootName = spellingNotes(analysis.root, false, false)[0];
+  const rootName = analysis.rootName;
   const chordName = `${rootName}${analysis.base}${Array.isArray(analysis.quality) && analysis.quality.length > 0 ? analysis.quality.join("") : ""}${analysis.inversion}`;
 
   const options = analysis.options.map(opt => {
-    const rootNameOpt = spellingNotes(opt[0], false, false)[0];
+    const rootNameOpt = opt[6];
     const base = opt[1];
     const quality = Array.isArray(opt[2]) ? opt[2] : [];
     const qualityStr = quality.length > 0 ? quality.join("") : "";
@@ -1332,7 +1335,30 @@ export function spellingNotes(
       index--;
     }
   }
-  let preDegrees = finalScale.getDegrees();
+  const analysis = finalScale.degreeFunction();
+  let preDegrees = analysis.degreeFunction.map(d => d.degree);
+  const intervalTypes = analysis.intervalTypes;
+
+  // Case 1: Interval 9 (Maj 6 / Dim 7)
+  const degree6 = preDegrees.indexOf(6)
+  if (degree6 !== -1 && intervalTypes.has("7dim")) {
+    preDegrees[degree6] = 5;
+  }
+
+  // Case 2: Interval 2 (Maj 2 / Dim 3) - Context Sus 2
+  // If mapped to degree 2 (3rd), re-map to degree 1 (2nd) for better spelling
+  const degree2 = preDegrees.indexOf(2);
+  if (degree2 !== -1 && intervalTypes.has("3dim")) {
+    preDegrees[degree2] = 1;
+  }
+
+  // Case 3: Interval 5 (Perf 4 / Aug 3) - Context Sus 4
+  const degree3Aug = preDegrees.indexOf(2);
+  if (degree3Aug !== -1 && intervalTypes.has("3aug")) {
+    preDegrees[degree3Aug] = 3;
+  }
+
+
   // Get degrees and prepare for enharmonic adjustment
   // Choose the best set of adjustments based on total deviation
   let bestSteps: number[] = [];
