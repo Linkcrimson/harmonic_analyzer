@@ -164,7 +164,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                         </span>
                                     </div>
                                     <p className="text-xs text-gray-400 mt-2">
-                                        Versione: 1.0.0
+                                        Versione: {__APP_VERSION__}
                                     </p>
                                 </div>
 

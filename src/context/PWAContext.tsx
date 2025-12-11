@@ -58,11 +58,11 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, []);
 
     const {
-        needRefresh: [needRefresh, setNeedRefresh],
-        offlineReady: [offlineReady, setOfflineReady],
+        needRefresh: [needRefresh],
+        offlineReady: [offlineReady],
         updateServiceWorker
     } = useRegisterSW({
-        onRegisteredMR(r) {
+        onRegistered(r) {
             if (r) {
                 // Check every hour
                 setInterval(() => {
