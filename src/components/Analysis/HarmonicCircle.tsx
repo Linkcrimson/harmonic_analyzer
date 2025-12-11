@@ -62,7 +62,15 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
         return map;
     }, [activeNotes, rootNoteId, intervals, noteNames]);
 
-    const [hoveredInfo, setHoveredInfo] = useState<{ title: string; content: React.ReactNode; x: number; y: number } | null>(null);
+    const [hoveredInfo, setHoveredInfo] = useState<{
+        title: string;
+        content: React.ReactNode;
+        x: number;
+        y: number;
+        containerWidth: number;
+        clientY: number;
+        windowHeight: number;
+    } | null>(null);
 
     // Context-Aware Interval Naming
     const getIntervalName = (idx: number, type: string) => {
@@ -137,7 +145,10 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                 title,
                 content,
                 x: e.clientX - svgRect.left,
-                y: e.clientY - svgRect.top
+                y: e.clientY - svgRect.top,
+                containerWidth: svgRect.width,
+                clientY: e.clientY,
+                windowHeight: window.innerHeight
             });
         }
     };
@@ -153,7 +164,10 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                 setHoveredInfo(prev => prev ? ({
                     ...prev,
                     x: e.clientX - svgRect.left,
-                    y: e.clientY - svgRect.top
+                    y: e.clientY - svgRect.top,
+                    containerWidth: svgRect.width,
+                    clientY: e.clientY,
+                    windowHeight: window.innerHeight
                 }) : null);
             }
         }
@@ -367,24 +381,71 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
             </div>
 
             {/* Custom Tooltip Overlay */}
-            {hoveredInfo && (
-                <div
-                    className="absolute z-50 pointer-events-none px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-sm text-gray-200 max-w-[220px] text-center backdrop-blur-sm"
-                    style={{
-                        left: hoveredInfo.x,
-                        top: hoveredInfo.y - 15, // Offset slightly above cursor
-                        transform: 'translate(-50%, -100%)' // Center horizontally, position above
-                    }}
-                >
-                    <div className="font-bold text-[#e0e0e0] mb-2 uppercase tracking-wider text-xs border-b border-[#333] pb-1">
-                        {hoveredInfo.title}
+            {/* Custom Tooltip Overlay */}
+            {hoveredInfo && (() => {
+                // Smart Positioning System
+                const padding = 20; // safe area from edges of the container
+                const tooltipWidth = 220; // Fixed width from CSS
+
+                // 1. Calculate ideal left position (centered on cursor)
+                // boxLeft is relative to the container (SVG parent div)
+                let boxLeft = hoveredInfo.x - (tooltipWidth / 2);
+
+                // 2. Clamp to container bounds
+                // Prevent going too far left
+                if (boxLeft < padding) {
+                    boxLeft = padding;
+                }
+                // Prevent going too far right
+                else if (boxLeft + tooltipWidth > hoveredInfo.containerWidth - padding) {
+                    boxLeft = hoveredInfo.containerWidth - padding - tooltipWidth;
+                }
+
+                // 3. Calculate arrow position relative to the tooltip box
+                // The arrow needs to point to the original cursor X (hoveredInfo.x)
+                // boxLeft is the left edge of the tooltip. 
+                // So the arrow's offset from the left edge is (cursorX - boxLeft).
+                const relativeCursorX = hoveredInfo.x - boxLeft;
+
+                // Clamp arrow to be inside the rounded corners (approx 12px radius)
+                const arrowX = Math.max(12, Math.min(tooltipWidth - 12, relativeCursorX));
+
+                // Vertical Flip Logic
+                const tooltipHeightApprox = 150; // Estimate
+                const isTooHigh = hoveredInfo.clientY < tooltipHeightApprox;
+
+                const topPos = isTooHigh ? hoveredInfo.y + 25 : hoveredInfo.y - 15;
+                const transformY = isTooHigh ? '0%' : '-100%';
+
+                // Arrow Position: if flipped (isTooHigh), arrow is at top (-50% Y), else bottom (50% Y)
+                const arrowYClass = isTooHigh ? 'top-0 -translate-y-1/2' : 'bottom-0 translate-y-1/2';
+                const arrowBorderClass = isTooHigh ? 'border-l border-t' : 'border-r border-b';
+
+                return (
+                    <div
+                        className="absolute z-50 pointer-events-none px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-sm text-gray-200 w-[220px] text-center backdrop-blur-sm"
+                        style={{
+                            left: boxLeft,
+                            top: topPos,
+                            transform: `translateY(${transformY})`,
+                        }}
+                    >
+                        <div className="font-bold text-[#e0e0e0] mb-2 uppercase tracking-wider text-xs border-b border-[#333] pb-1">
+                            {hoveredInfo.title}
+                        </div>
+                        <div className="leading-relaxed">
+                            {hoveredInfo.content}
+                        </div>
+                        <div
+                            className={`absolute w-3 h-3 bg-[#1a1a1a] border-[#333] ${arrowYClass} ${arrowBorderClass}`}
+                            style={{
+                                left: arrowX,
+                                transform: isTooHigh ? 'translate(-50%, -50%) rotate(45deg)' : 'translate(-50%, 50%) rotate(45deg)'
+                            }}
+                        ></div>
                     </div>
-                    <div className="leading-relaxed">
-                        {hoveredInfo.content}
-                    </div>
-                    <div className="absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-3 h-3 bg-[#1a1a1a] border-r border-b border-[#333]"></div>
-                </div>
-            )}
+                );
+            })()}
         </div>
     );
 };
