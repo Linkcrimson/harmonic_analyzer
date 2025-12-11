@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 
 export interface ChordNotationSettings {
-    major: 'maj' | 'Δ';
+    major: 'maj' | '∆';
     minor: 'min' | 'm' | '-';
     diminished: 'dim' | '°' | 'dynamic';
     augmented: 'aug' | '+';
@@ -11,7 +11,7 @@ export interface ChordNotationSettings {
 }
 
 export const DEFAULT_NOTATION_SETTINGS: ChordNotationSettings = {
-    major: 'Δ',
+    major: '∆',
     minor: '-',
     diminished: '°',
     augmented: '+',
