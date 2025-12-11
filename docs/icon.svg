@@ -16,13 +16,18 @@
                 <feMergeNode in="SourceGraphic"/>
             </feMerge>
         </filter>
+        <!-- Background Gradient (Minimal) -->
+        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#231e33"/> <!-- Slightly lighter violet -->
+            <stop offset="100%" stop-color="#0f0f15"/> <!-- Deepest dark -->
+        </linearGradient>
     </defs>
 
     <!-- Sfondo Dark Squircle -->
-    <rect width="512" height="512" rx="110" fill="#0f0f11"/>
+    <rect width="512" height="512" rx="60" fill="url(#bgGrad)"/>
     
     <!-- Gruppo Principale -->
-    <g transform="translate(256 270)" filter="url(#nodeGlow)">
+    <g transform="translate(256 235) scale(1.5)" filter="url(#nodeGlow)">
         <!-- La Forma Delta di Sfondo (Onde Viola) -->
         <path d="M-130 110 Q 0 -180 130 110" stroke="url(#nodeGrad)" stroke-width="14" fill="none" opacity="0.4" stroke-linecap="round"/>
         <path d="M-130 110 Q 0 160 130 110" stroke="url(#nodeGrad)" stroke-width="14" fill="none" opacity="0.4" stroke-linecap="round"/>

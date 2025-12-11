@@ -11,7 +11,7 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const { theme, setTheme, customColors, setCustomColors } = useTheme();
     const { inputMode, setInputMode } = useHarmonic();
-    const [activeTab, setActiveTab] = React.useState<'appearance' | 'input'>('appearance');
+    const [activeTab, setActiveTab] = React.useState<'appearance' | 'input'>('input');
 
     if (!isOpen) return null;
 
@@ -30,20 +30,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 {/* Tab Navigation */}
                 <div className="flex border-b border-[#333] mb-4">
                     <button
-                        className={`flex-1 pb-3 text-sm font-medium transition-colors relative ${activeTab === 'appearance' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
-                        onClick={() => setActiveTab('appearance')}
-                    >
-                        Aspetto
-                        {activeTab === 'appearance' && (
-                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 rounded-t-full"></div>
-                        )}
-                    </button>
-                    <button
                         className={`flex-1 pb-3 text-sm font-medium transition-colors relative ${activeTab === 'input' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
                         onClick={() => setActiveTab('input')}
                     >
                         Input
                         {activeTab === 'input' && (
+                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 rounded-t-full"></div>
+                        )}
+                    </button>
+                    <button
+                        className={`flex-1 pb-3 text-sm font-medium transition-colors relative ${activeTab === 'appearance' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                        onClick={() => setActiveTab('appearance')}
+                    >
+                        Aspetto
+                        {activeTab === 'appearance' && (
                             <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 rounded-t-full"></div>
                         )}
                     </button>
