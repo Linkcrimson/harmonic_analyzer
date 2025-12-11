@@ -19,7 +19,7 @@ interface ControlsProps {
 }
 
 export const Controls: React.FC<ControlsProps> = ({ scrollContainerRef }) => {
-    const { currentWaveform, setWaveform, playCurrentChord, reset, audioMode, setAudioMode } = useHarmonic();
+    const { currentWaveform, setWaveform, reset, audioMode, setAudioMode } = useHarmonic();
     const [isScrolling, setIsScrolling] = useState(false);
     const startX = useRef(0);
     const startScrollLeft = useRef(0);
@@ -114,17 +114,6 @@ export const Controls: React.FC<ControlsProps> = ({ scrollContainerRef }) => {
                 </button>
 
 
-
-                {/* Play Button */}
-                <button onClick={playCurrentChord}
-                    className="h-10 w-10 rounded-full bg-[#222] text-white hover:bg-[#333] border border-[#333] flex items-center justify-center shadow-sm transition active:scale-95"
-                    title="Suona Accordo">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                            clipRule="evenodd" />
-                    </svg>
-                </button>
 
                 {/* Reset Button */}
                 <button onClick={reset}

@@ -171,5 +171,13 @@ export const useAudio = () => {
         }
     }, []);
 
-    return { initAudio, startNote, stopNote, playTone, getFrequency, setNoteVolume };
+    const setNoteWaveform = useCallback((noteId: number, type: OscillatorType) => {
+        const activeNote = activeOscillators.current.get(noteId);
+        if (activeNote) {
+            const { osc } = activeNote;
+            osc.type = type;
+        }
+    }, []);
+
+    return { initAudio, startNote, stopNote, playTone, getFrequency, setNoteVolume, setNoteWaveform };
 };

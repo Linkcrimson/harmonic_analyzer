@@ -91,8 +91,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
     });
 
-    const { initAudio, startNote, stopNote, playTone, getFrequency, setNoteVolume } = useAudio();
-
+    const { initAudio, startNote, stopNote, playTone, getFrequency, setNoteVolume, setNoteWaveform } = useAudio();
 
     const analyze = useCallback((notes: Set<number>, selectedIndex: number = 0, bassAsRoot: boolean = false) => {
         if (notes.size === 0) {
@@ -263,7 +262,8 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         } else {
             newSet.add(noteId);
             if (audioMode === 'short' || audioMode === 'repeat') {
-                playChordNotes(new Set([noteId]));
+                // Play full chord instead of single note
+                playChordNotes(newSet);
             } else {
                 const volPerNote = 0.4 / Math.max(1, newSet.size);
                 // Scale existing notes down
@@ -291,10 +291,8 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 newSet.add(noteId);
 
                 if (audioMode === 'short' || audioMode === 'repeat') {
-                    // For short/repeat in non-toggle input modes (like MIDI or momentary), we might spam this. 
-                    // But playChordNotes handles a set. Here we just play ONE note? 
-                    // Original code played set([noteId]).
-                    playChordNotes(new Set([noteId]));
+                    // Play full chord instead of just the triggered note
+                    playChordNotes(newSet);
                 } else {
                     const volPerNote = 0.4 / Math.max(1, newSet.size);
                     // Update others
@@ -417,7 +415,11 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const setWaveform = useCallback((type: OscillatorType) => {
         setCurrentWaveform(type);
-    }, []);
+        // Reactive update for active oscillators
+        activeNotes.forEach(noteId => {
+            setNoteWaveform(noteId, type);
+        });
+    }, [activeNotes, setNoteWaveform]);
 
     const selectChordOption = useCallback((index: number) => {
         setSelectedOptionIndex(index);
