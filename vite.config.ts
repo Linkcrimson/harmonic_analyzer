@@ -13,7 +13,8 @@ export default defineConfig({
                 name: 'Chord Analyzer',
                 short_name: 'Chord Analyzer',
                 description: 'Advanced music theory analysis tool',
-                theme_color: '#ffffff',
+                theme_color: '#1a1625',
+                background_color: '#1a1625', // Splash screen background
                 icons: [
                     {
                         src: 'pwa-192x192.png',
