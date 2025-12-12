@@ -1168,8 +1168,8 @@ export function analyzeChord(
     }
 
     // Bonus for 9th chords (preferred over inversions)
-    if (quality.includes("add9") || quality.includes("b9") || quality.includes("#9")) {
-      score += 3;
+    if (quality.includes("b9") || quality.includes("#9")) {
+      score += 2;
     }
 
     // Bonus for augmented chords (prefer + interpretation)
@@ -1188,8 +1188,8 @@ export function analyzeChord(
     if (quality.includes("b9") || quality.includes("#9") || quality.includes("#11") || quality.includes("b13")) {
       score += 1;
     }
-    if (quality.includes("add11") || quality.includes("add13") || quality.includes("add♭13") || quality.includes("add♯13")) {
-      score += 2;
+    if (quality.includes("add9") || quality.includes("addb9") || quality.includes("add#9") || quality.includes("add11") || quality.includes("add13") || quality.includes("add♭13") || quality.includes("add♯13")) {
+      score += 3;
     }
     // Penalty for sus chords if they are not the primary intent (context dependent, but generally prefer major/minor)
     if (quality.includes("sus2") || quality.includes("sus4")) {
