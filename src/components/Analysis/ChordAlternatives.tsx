@@ -19,6 +19,7 @@ export const ChordAlternatives: React.FC = () => {
                         ? 'bg-blue-600 text-white border-blue-500 shadow-md'
                         : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700 hover:text-gray-200'
                         }`}
+                    title={`Score: ${opt.score}`}
                 >
                     {opt.chordName}
                 </button>

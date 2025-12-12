@@ -924,16 +924,58 @@ export function analyzeChord(
 
   let candidates = [];
   let iTcandidates = [];
+  let k = 0;
   let chordNames: [positionVector, string, string[], string, string[], {
     thirdQuality: string,
     fifthQuality: string,
     seventhQuality: string,
     extensions: string[]
-  }, string][] = [];
+  }, string, number][] = [];
   let length = 1;
   if (allowSlashChords) {
     length = chord.data.length;
   }
+
+  // Helper function to calculate chord weight
+  const getChordWeight = (quality: string[], inversion: string, base: string) => {
+    let score = 0;
+
+    // Base score: number of extensions/alterations (simpler is better, but we want to capture specific qualities)
+    score += quality.length;
+
+    // Penalty for inversions
+    if (inversion !== "") {
+      score += 1;
+    }
+
+    // Bonus for 9th chords (preferred over inversions)
+    if (quality.includes("b9") || quality.includes("#9") || quality.includes("b13")) {
+      score += 2;
+    }
+
+    // Bonus for augmented chords (prefer + interpretation)
+    if (base.includes("+")) {
+      score += 2;
+    }
+
+    // Penalty for omissions (unless necessary)
+    if (quality.includes("omit3")) {
+      score += 3;
+    }
+    if (quality.includes("omit5")) {
+      score += 2;
+    }
+
+    if (quality.includes("add9") || quality.includes("addb9") || quality.includes("add#9") || quality.includes("add11") || quality.includes("add13") || quality.includes("addb13") || quality.includes("add#13")) {
+      score += 3;
+    }
+    // Penalty for sus chords if they are not the primary intent (context dependent, but generally prefer major/minor)
+    if (quality.includes("sus2") || quality.includes("sus4")) {
+      score += 2;
+    }
+
+    return score;
+  };
 
   for (let i = 0; i < length; i++) {
     let candidate = chord.rototranslate(i, chord.data.length, false);
@@ -1010,7 +1052,7 @@ export function analyzeChord(
       !iTCandidate.has("5") &&
       !iTCandidate.has("5aug")
     ) {
-      chordQuality.push("♭5");
+      chordQuality.push("b5");
     }
 
     // Add b5 for dominant 7th with diminished fifth (7b5)
@@ -1021,16 +1063,16 @@ export function analyzeChord(
       !iTCandidate.has("5") &&
       !iTCandidate.has("5aug")
     ) {
-      chordQuality.push("♭5");
+      chordQuality.push("b5");
       iTCandidate.add("5dim"); // Treat as diminished 5th to prevent "omit5"
     }
 
     // Add extended notes to the chord quality
     if (iTCandidate.has("2min")) {
       if (!iTCandidate.has("7maj") && !iTCandidate.has("7min")) {
-        chordQuality.push("add♭9");
+        chordQuality.push("addb9");
       } else {
-        chordQuality.push("♭9");
+        chordQuality.push("b9");
       }
     }
     if (iTCandidate.has("2")) {
@@ -1044,9 +1086,9 @@ export function analyzeChord(
     }
     if (iTCandidate.has("2aug")) {
       if (!iTCandidate.has("7maj") && !iTCandidate.has("7min")) {
-        chordQuality.push("add♯9");
+        chordQuality.push("add#9");
       } else {
-        chordQuality.push("♯9");
+        chordQuality.push("#9");
       }
     }
     if (iTCandidate.has("4") && !iTCandidate.has("3dim")) {
@@ -1061,16 +1103,16 @@ export function analyzeChord(
     }
     if (iTCandidate.has("4aug") && !chordQuality.includes("♭5")) {
       if (!iTCandidate.has("7maj") && !iTCandidate.has("7min") && !iTCandidate.has("7dim")) {
-        chordQuality.push("add♯11");
+        chordQuality.push("add#11");
       } else {
-        chordQuality.push("♯11");
+        chordQuality.push("#11");
       }
     }
     if (iTCandidate.has("6min")) {
       if (!iTCandidate.has("7maj") && !iTCandidate.has("7min")) {
-        chordQuality.push("add♭13");
+        chordQuality.push("addb13");
       } else {
-        chordQuality.push("♭13");
+        chordQuality.push("b13");
       }
     }
     if (iTCandidate.has("6")) {
@@ -1081,7 +1123,7 @@ export function analyzeChord(
       }
     }
     if (iTCandidate.has("6aug")) {
-      chordQuality.push("♯13");
+      chordQuality.push("#13");
     }
     if (
       !iTCandidate.has("3maj") &&
@@ -1148,61 +1190,16 @@ export function analyzeChord(
 
     const contextRootName = spellingNotes(candidate, false, false, false)[0];
 
+    const score = getChordWeight(chordQuality, inversion, chordBase);
+
     // Store the chord components in an array
-    chordNames.push([root, chordBase, chordQuality, inversion, Array.from(iTCandidate), detailedAnalysis, contextRootName]);
+    chordNames.push([root, chordBase, chordQuality, inversion, Array.from(iTCandidate), detailedAnalysis, contextRootName, score]);
   }
-
-  // Sort chord names based on the length of chordQuality
-  // Helper function to calculate chord weight
-  const getChordWeight = (chord: typeof chordNames[0]) => {
-    let score = 0;
-    const quality = chord[2];
-    const inversion = chord[3];
-
-    // Base score: number of extensions/alterations (simpler is better, but we want to capture specific qualities)
-    score += quality.length;
-
-    // Penalty for inversions
-    if (inversion !== "") {
-      score += 1;
-    }
-
-    // Bonus for 9th chords (preferred over inversions)
-    if (quality.includes("b9") || quality.includes("#9")) {
-      score += 2;
-    }
-
-    // Bonus for augmented chords (prefer + interpretation)
-    if (chord[1].includes("+")) {
-      score += 2;
-    }
-
-    // Penalty for omissions (unless necessary)
-    if (quality.includes("omit3")) {
-      score += 3;
-    }
-    if (quality.includes("omit5")) {
-      score += 2;
-    }
-    // Slight penalty for altered extensions to prefer simpler ones if available
-    if (quality.includes("b9") || quality.includes("#9") || quality.includes("#11") || quality.includes("b13")) {
-      score += 1;
-    }
-    if (quality.includes("add9") || quality.includes("addb9") || quality.includes("add#9") || quality.includes("add11") || quality.includes("add13") || quality.includes("add♭13") || quality.includes("add♯13")) {
-      score += 3;
-    }
-    // Penalty for sus chords if they are not the primary intent (context dependent, but generally prefer major/minor)
-    if (quality.includes("sus2") || quality.includes("sus4")) {
-      score += 2;
-    }
-
-    return score;
-  };
 
   // Sort chord names based on the calculated weight
   chordNames.sort((a, b) => {
-    const weightA = getChordWeight(a);
-    const weightB = getChordWeight(b);
+    const weightA = a[7];
+    const weightB = b[7];
     return weightA - weightB;
   });
 
@@ -1275,7 +1272,8 @@ export function getChordName(
         detailedAnalysis: opt[5]
       },
       intervals: opt[4],
-      detailedAnalysis: opt[5]
+      detailedAnalysis: opt[5],
+      score: opt[7]
     };
   });
 
