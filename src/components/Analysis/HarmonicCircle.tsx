@@ -216,7 +216,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                                         r={25}
                                         fill="transparent"
                                         stroke="none"
-                                        onMouseEnter={(e) => handleMouseEnter(sector.title, content, e)}
+                                        onMouseEnter={(e) => handleMouseEnter(note.type === 'ext' ? "Estensione" : sector.title, content, e)}
                                         onMouseMove={handleMouseMove}
                                         onMouseLeave={handleMouseLeave}
                                         style={{ cursor: 'help' }}
