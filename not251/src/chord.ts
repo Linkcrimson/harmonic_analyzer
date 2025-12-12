@@ -1013,6 +1013,18 @@ export function analyzeChord(
       chordQuality.push("♭5");
     }
 
+    // Add b5 for dominant 7th with diminished fifth (7b5)
+    if (
+      iTCandidate.has("3maj") &&
+      (iTCandidate.has("5dim") || iTCandidate.has("4aug")) &&
+      iTCandidate.has("7min") &&
+      !iTCandidate.has("5") &&
+      !iTCandidate.has("5aug")
+    ) {
+      chordQuality.push("♭5");
+      iTCandidate.add("5dim"); // Treat as diminished 5th to prevent "omit5"
+    }
+
     // Add extended notes to the chord quality
     if (iTCandidate.has("2min")) {
       if (!iTCandidate.has("7maj") && !iTCandidate.has("7min")) {
@@ -1047,7 +1059,7 @@ export function analyzeChord(
         chordQuality.push("11");
       }
     }
-    if (iTCandidate.has("4aug")) {
+    if (iTCandidate.has("4aug") && !chordQuality.includes("♭5")) {
       if (!iTCandidate.has("7maj") && !iTCandidate.has("7min") && !iTCandidate.has("7dim")) {
         chordQuality.push("add♯11");
       } else {
@@ -1152,7 +1164,7 @@ export function analyzeChord(
 
     // Penalty for inversions
     if (inversion !== "") {
-      score += 2;
+      score += 1;
     }
 
     // Bonus for 9th chords (preferred over inversions)
@@ -1162,7 +1174,7 @@ export function analyzeChord(
 
     // Bonus for augmented chords (prefer + interpretation)
     if (chord[1].includes("+")) {
-      score += 3;
+      score += 2;
     }
 
     // Penalty for omissions (unless necessary)
@@ -1174,13 +1186,13 @@ export function analyzeChord(
     }
     // Slight penalty for altered extensions to prefer simpler ones if available
     if (quality.includes("b9") || quality.includes("#9") || quality.includes("#11") || quality.includes("b13")) {
-      score += 2;
+      score += 1;
     }
-    if (quality.includes("add11") || quality.includes("add13")) {
+    if (quality.includes("add11") || quality.includes("add13") || quality.includes("add♭13") || quality.includes("add♯13")) {
       score += 2;
     }
     // Penalty for sus chords if they are not the primary intent (context dependent, but generally prefer major/minor)
-    if (quality.includes("sus")) {
+    if (quality.includes("sus2") || quality.includes("sus4")) {
       score += 2;
     }
 
