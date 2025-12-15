@@ -1044,28 +1044,18 @@ export function analyzeChord(
       chordQuality.push("sus2");
     }
 
-    // Add b5 for sus chords with diminished fifth
+    // Add b5 for chords with diminished fifth (Sus b5 or dyad b5)
+    // Exclude dim/dim7/ø chords which already imply b5
     if (
-      (iTCandidate.has("3aug") || iTCandidate.has("3dim") ||
-        (iTCandidate.has("4") && iTCandidate.has("3dim"))) &&
       iTCandidate.has("5dim") &&
       !iTCandidate.has("5") &&
-      !iTCandidate.has("5aug")
+      !iTCandidate.has("5aug") &&
+      !chordBase.startsWith("dim") &&
+      !chordBase.startsWith("ø")
     ) {
       chordQuality.push("b5");
     }
 
-    // Add b5 for dominant 7th with diminished fifth (7b5)
-    if (
-      iTCandidate.has("3maj") &&
-      (iTCandidate.has("5dim") || iTCandidate.has("4aug")) &&
-      iTCandidate.has("7min") &&
-      !iTCandidate.has("5") &&
-      !iTCandidate.has("5aug")
-    ) {
-      chordQuality.push("b5");
-      iTCandidate.add("5dim"); // Treat as diminished 5th to prevent "omit5"
-    }
 
     // Add extended notes to the chord quality
     if (iTCandidate.has("2min")) {
@@ -1101,7 +1091,7 @@ export function analyzeChord(
         chordQuality.push("11");
       }
     }
-    if (iTCandidate.has("4aug") && !chordQuality.includes("♭5")) {
+    if (iTCandidate.has("4aug") && !chordQuality.includes("b5")) {
       if (!iTCandidate.has("7maj") && !iTCandidate.has("7min") && !iTCandidate.has("7dim")) {
         chordQuality.push("add#11");
       } else {
@@ -1368,6 +1358,12 @@ export function spellingNotes(
     preDegrees[degree3Aug] = 3;
   }
 
+  // Case 4: Interval 6 (Dim 5 / Aug 4) - Context 7b5
+  // When chord has minor 7th, spell the tritone as b5 (Gb) not #11 (F#)
+  const degree4Aug = preDegrees.indexOf(3);
+  if (degree4Aug !== -1 && (intervalTypes.has("5dim") || intervalTypes.has("4aug")) && intervalTypes.has("7min")) {
+    preDegrees[degree4Aug] = 4; // Remap from F (degree 3) to G (degree 4) -> will become Gb
+  }
 
   // Get degrees and prepare for enharmonic adjustment
   // Choose the best set of adjustments based on total deviation
@@ -1375,6 +1371,7 @@ export function spellingNotes(
   let bestNoteDegrees = preDegrees;
   let minDeviation = Infinity;
   let bestIndex = index;
+  let bestRootDeviation = Infinity; // Track root note deviation specifically
 
   // Check offsets -1, 0, +1 to find the best alignment (minimizing alterations)
   for (let offset = -1; offset <= 1; offset++) {
@@ -1393,10 +1390,17 @@ export function spellingNotes(
       currentDeviation += deviation;
     }
 
-    if (Math.abs(currentDeviation) < Math.abs(minDeviation)) {
+    const rootDeviation = Math.abs(currentSteps[0]);
+
+    // Prioritize: 1) Root with 0 deviation (white key), 2) Minimum total deviation
+    const isBetterRoot = rootDeviation < bestRootDeviation;
+    const isSameRootButBetterTotal = rootDeviation === bestRootDeviation && Math.abs(currentDeviation) < Math.abs(minDeviation);
+
+    if (isBetterRoot || isSameRootButBetterTotal) {
       minDeviation = currentDeviation;
       bestSteps = currentSteps;
       bestIndex = currentIndex;
+      bestRootDeviation = rootDeviation;
     }
   }
 

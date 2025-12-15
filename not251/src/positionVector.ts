@@ -570,7 +570,9 @@ export class positionVector {
     }
 
     // Look for diminished fifth
-    if (!intervalTypes.has("5") && !intervalTypes.has("5aug") && !intervalTypes.has("3maj") && binaryData[6] == true) {
+    // Allow 5dim when: no perfect 5th, no aug 5th, AND either (no major 3rd) OR (has 7min - indicating 7b5 chord)
+    const has7min = binaryData[10] == true;
+    if (!intervalTypes.has("5") && !intervalTypes.has("5aug") && (!intervalTypes.has("3maj") || has7min) && binaryData[6] == true) {
       for (const i of pool) {
         if (shiftedData[i] == 6) {
           degFunc[i] = 4;
