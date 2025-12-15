@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useHarmonic } from '../../context/HarmonicContext';
 import { ChordSymbol } from './ChordSymbol';
+import { getDidacticExplanation } from '../../utils/didacticTooltips';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface HarmonicCircleProps {
     size?: number;
@@ -9,6 +11,7 @@ interface HarmonicCircleProps {
 export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) => {
     const { activeNotes, analysis, chordName, chordOptions, selectedOptionIndex } = useHarmonic();
     const { intervals, noteNames } = analysis;
+    const { language, t } = useLanguage();
 
     // Configuration
     const center = size / 2;
@@ -73,22 +76,12 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
     } | null>(null);
 
     // Context-Aware Interval Naming
-    const getIntervalName = (idx: number, type: string) => {
-        const baseNames = [
-            "Fondamentale", "Seconda Minore", "Seconda Maggiore", "Terza Minore", "Terza Maggiore",
-            "Quarta Giusta", "Tritono", "Quinta Giusta", "Sesta Minore", "Sesta Maggiore",
-            "Settima Minore", "Settima Maggiore"
-        ];
+    const contextIntervals = useMemo(() => {
+        if (rootNoteId === null) return [];
+        const rootPitch = rootNoteId % 12;
+        return Array.from(activeNotes).map(n => (n % 12 - rootPitch + 12) % 12);
+    }, [activeNotes, rootNoteId]);
 
-        if (idx === 6 && type === 'fifth') return "Quinta Diminuita";
-        if (idx === 8 && type === 'fifth') return "Quinta Aumentata";
-        if (idx === 9 && type === 'seventh') return "Settima Diminuita";
-
-        if (idx === 2 && type === 'third') return "Sus 2";
-        if (idx === 5 && type === 'third') return "Sus 4";
-
-        return baseNames[idx] || "";
-    };
 
     // Define Sectors
     const sectors = [
@@ -97,32 +90,32 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
             range: [0, 0],
             type: 'root',
             colorVar: '--col-root',
-            title: 'Fondamentale',
-            description: 'La nota generatrice dell\'accordo, il punto di riferimento da cui si calcolano tutti gli intervalli.'
+            title: t('sectors.root.title'),
+            description: t('sectors.root.desc')
         },
         {
             label: 'Thirds',
             range: [2, 5],
             type: 'third',
             colorVar: '--col-third',
-            title: 'Area Modale (3a/Sus)',
-            description: 'Definisce il modo (Maggiore/Minore) o la sospensione. Include 2a Maggiore, 3a Minore, 3a Maggiore e 4a Giusta.'
+            title: t('sectors.thirds.title'),
+            description: t('sectors.thirds.desc')
         },
         {
             label: 'Fifths',
             range: [6, 8],
             type: 'fifth',
             colorVar: '--col-fifth',
-            title: 'Area di Stabilità (5a)',
-            description: 'Determina la stabilità o tensione. Include il Tritono (dim), la 5a Giusta (perfetta) e la 5a Aumentata (aug).'
+            title: t('sectors.fifths.title'),
+            description: t('sectors.fifths.desc')
         },
         {
             label: 'Sevenths',
             range: [9, 11],
             type: 'seventh',
             colorVar: '--col-seventh',
-            title: 'Area Funzionale (7a)',
-            description: 'Definisce la funzione armonica. Include la 6a Maggiore (o 7a dim), la 7a Minore e la 7a Maggiore.'
+            title: t('sectors.sevenths.title'),
+            description: t('sectors.sevenths.desc')
         },
     ];
 
@@ -198,12 +191,15 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                         return notesInSector.map((note, i) => {
                             const pos = getPoint(note.idx);
                             const labelPos = getPoint(note.idx, radius + 30);
-                            const intervalName = getIntervalName(note.idx, note.type);
+                            const didactic = getDidacticExplanation(note.idx, contextIntervals, language);
                             const content = (
                                 <div>
                                     <div className="font-bold text-white mb-1">{note.name}</div>
-                                    <div className="text-gray-300">{intervalName}</div>
-                                    <div className="text-xs text-gray-400 mt-1">{note.idx} semiton{note.idx === 1 ? 'o' : 'i'}</div>
+                                    <div className="text-gray-300">{didactic.title}</div>
+                                    <div className="text-xs text-gray-400 mt-1">{note.idx} {note.idx === 1 ? t('general.semitone') : t('general.semitones')}</div>
+                                    <div className="text-xs text-gray-500 mt-2 border-t border-gray-700 pt-1 text-left leading-relaxed">
+                                        {didactic.description}
+                                    </div>
                                 </div>
                             );
 
@@ -216,7 +212,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                                         r={25}
                                         fill="transparent"
                                         stroke="none"
-                                        onMouseEnter={(e) => handleMouseEnter(note.type === 'ext' ? "Estensione" : sector.title, content, e)}
+                                        onMouseEnter={(e) => handleMouseEnter(didactic.title, content, e)}
                                         onMouseMove={handleMouseMove}
                                         onMouseLeave={handleMouseLeave}
                                         style={{ cursor: 'help' }}
@@ -313,12 +309,16 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                     if (!inSector) {
                         const pos = getPoint(idx);
                         const labelPos = getPoint(idx, radius + 30);
-                        const intervalName = getIntervalName(idx, note.type);
+                        const didactic = getDidacticExplanation(idx, contextIntervals, language);
+
                         const content = (
                             <div>
                                 <div className="font-bold text-white mb-1">{note.name}</div>
-                                <div className="text-gray-300">{intervalName}</div>
-                                <div className="text-xs text-gray-400 mt-1">{idx} semiton{idx === 1 ? 'o' : 'i'}</div>
+                                <div className="text-gray-300">{didactic.title}</div>
+                                <div className="text-xs text-gray-400 mt-1">{idx} {idx === 1 ? t('general.semitone') : t('general.semitones')}</div>
+                                <div className="text-xs text-gray-500 mt-2 border-t border-gray-700 pt-1 text-left leading-relaxed">
+                                    {didactic.description}
+                                </div>
                             </div>
                         );
 
@@ -330,7 +330,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                                     r={25}
                                     fill="transparent"
                                     stroke="none"
-                                    onMouseEnter={(e) => handleMouseEnter("Estensione", content, e)}
+                                    onMouseEnter={(e) => handleMouseEnter(didactic.title, content, e)}
                                     onMouseMove={handleMouseMove}
                                     onMouseLeave={handleMouseLeave}
                                     style={{ cursor: 'help' }}

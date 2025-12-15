@@ -1,0 +1,37 @@
+{
+    "settings": {
+        "title": "Impostazioni",
+        "language": "Lingua",
+        "theme": "Aspetto",
+        "input": "Input",
+        "notation": "Notazione",
+        "app": "App"
+    },
+    "language": {
+        "select": "Seleziona la lingua dell'interfaccia",
+        "it": "Italiano",
+        "en": "English"
+    },
+    "general": {
+        "semitone": "semitono",
+        "semitones": "semitoni"
+    },
+    "sectors": {
+        "root": {
+            "title": "Fondamentale",
+            "desc": "La nota generatrice dell'accordo, il punto di riferimento da cui si calcolano tutti gli intervalli."
+        },
+        "thirds": {
+            "title": "Area Modale (3a/Sus)",
+            "desc": "Definisce il modo (Maggiore/Minore) o la sospensione. Include 2a Maggiore, 3a Minore, 3a Maggiore e 4a Giusta."
+        },
+        "fifths": {
+            "title": "Area di Stabilità (5a)",
+            "desc": "Determina la stabilità o tensione. Include il Tritono (dim), la 5a Giusta (perfetta) e la 5a Aumentata (aug)."
+        },
+        "sevenths": {
+            "title": "Area Funzionale (7a)",
+            "desc": "Definisce la funzione armonica. Include la 6a Maggiore (o 7a dim), la 7a Minore e la 7a Maggiore."
+        }
+    }
+}

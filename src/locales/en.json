@@ -1,0 +1,37 @@
+{
+    "settings": {
+        "title": "Settings",
+        "language": "Language",
+        "theme": "Appearance",
+        "input": "Input",
+        "notation": "Notation",
+        "app": "App"
+    },
+    "language": {
+        "select": "Select interface language",
+        "it": "Italiano",
+        "en": "English"
+    },
+    "general": {
+        "semitone": "semitone",
+        "semitones": "semitones"
+    },
+    "sectors": {
+        "root": {
+            "title": "Root",
+            "desc": "The generating note of the chord, the reference point from which all intervals are calculated."
+        },
+        "thirds": {
+            "title": "Modal Area (3rd/Sus)",
+            "desc": "Defines the mode (Major/Minor) or suspension. Includes Major 2nd, Minor 3rd, Major 3rd and Perfect 4th."
+        },
+        "fifths": {
+            "title": "Stability Area (5th)",
+            "desc": "Determines stability or tension. Includes Tritone (dim), Perfect 5th and Augmented 5th (aug)."
+        },
+        "sevenths": {
+            "title": "Functional Area (7th)",
+            "desc": "Defines harmonic function. Includes Major 6th (or dim 7th), Minor 7th and Major 7th."
+        }
+    }
+}
