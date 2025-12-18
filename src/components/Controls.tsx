@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useHarmonic, AudioMode } from '../context/HarmonicContext';
 import { OscillatorType } from '../hooks/useAudio';
+import { KeyboardMinimap } from './Piano/KeyboardMinimap';
 
 const waveforms: { value: OscillatorType; label: string }[] = [
     { value: 'sine', label: 'Sinusoide' },
@@ -126,48 +127,28 @@ interface ControlsProps {
 
 export const Controls: React.FC<ControlsProps> = ({ scrollContainerRef }) => {
     const { currentWaveform, setWaveform, reset, audioMode, setAudioMode } = useHarmonic();
-    const [isScrolling, setIsScrolling] = useState(false);
-    const startX = useRef(0);
-    const startScrollLeft = useRef(0);
 
-    const handleTouchStart = (e: React.TouchEvent) => {
-        if (!scrollContainerRef?.current) return;
-        setIsScrolling(true);
-        startX.current = e.touches[0].clientX;
-        startScrollLeft.current = scrollContainerRef.current.scrollLeft;
-    };
 
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (!scrollContainerRef?.current) return;
-        const dx = e.touches[0].clientX - startX.current;
-        scrollContainerRef.current.scrollLeft = startScrollLeft.current - dx;
-    };
 
-    const handleTouchEnd = () => {
-        setIsScrolling(false);
-    };
 
     return (
         <div
             className="flex justify-between items-center w-full max-w-[600px] mb-2 lg:mb-4 relative z-10 overflow-visible rounded-lg p-1 transition-colors duration-300"
             style={{
-                background: isScrolling ? 'rgba(255,255,255,0.05)' : 'transparent',
-                touchAction: 'pan-x'
+                background: 'transparent',
             }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
         >
 
-            {/* Animated Background Gradient for Feedback */}
-            <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-[#333] to-transparent opacity-30 pointer-events-none transition-transform duration-300 overflow-hidden rounded-lg ${isScrolling ? 'scale-x-150' : 'scale-x-100 opacity-0'}`} />
 
-            <div className="text-xs text-gray-500 font-bold uppercase tracking-widest flex items-center gap-2 pointer-events-none">
-                <span className={`transition-opacity duration-300 ${isScrolling ? 'opacity-100 text-blue-400' : 'opacity-0 hidden'}`}>&lt;&lt;</span>
-                <span className={`transition-colors duration-300 ${isScrolling ? 'text-blue-400' : ''}`}>
-                    {isScrolling ? 'SCORRI' : 'TASTIERA INTERATTIVA'}
-                </span>
-                <span className={`transition-opacity duration-300 ${isScrolling ? 'opacity-100 text-blue-400' : 'opacity-0 hidden'}`}>&gt;&gt;</span>
+
+            {/* Desktop: show text label */}
+            <div className="hidden lg:flex text-xs text-gray-500 font-bold uppercase tracking-widest items-center gap-2 pointer-events-none">
+                <span>TASTIERA INTERATTIVA</span>
+            </div>
+
+            {/* Mobile: show minimap */}
+            <div className="lg:hidden flex-1 mr-3" onTouchStart={(e) => e.stopPropagation()}>
+                {scrollContainerRef && <KeyboardMinimap scrollContainerRef={scrollContainerRef} />}
             </div>
 
             <div className="flex gap-2 lg:gap-3 relative z-50" onTouchStart={(e) => e.stopPropagation()}>
