@@ -945,7 +945,7 @@ export function analyzeChord(
 
     // Penalty for inversions
     if (inversion !== "") {
-      score += 1;
+      score += 2;
     }
 
     // Bonus for 9th chords (preferred over inversions)
@@ -1387,7 +1387,11 @@ export function spellingNotes(
 
       const deviation = finalScale.data[i] - lcmStandard.element(preDegrees[i] + currentIndex + oct);
       currentSteps[i] = deviation;
-      currentDeviation += deviation;
+      if ([0, 2, 4].includes(preDegrees[i])) {
+        currentDeviation += 2 * deviation;
+      } else if ([6].includes(preDegrees[i])) {
+        currentDeviation += deviation;
+      }
     }
 
     const rootDeviation = Math.abs(currentSteps[0]);

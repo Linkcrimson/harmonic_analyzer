@@ -51,6 +51,8 @@ interface HarmonicState {
     startInput: (noteId: number, source?: 'ui' | 'midi') => void;
     stopInput: (noteId: number, source?: 'ui' | 'midi') => void;
     lockedNotes: Set<number>;
+    checkEnharmonic: boolean;
+    toggleEnharmonic: () => void;
 }
 
 const HarmonicContext = createContext<HarmonicState | null>(null);
@@ -69,9 +71,14 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [inputMode, setInputMode] = useState<InputMode>('toggle');
     const [audioMode, setAudioMode] = useState<AudioMode>('short');
     const [lockedNotes, setLockedNotes] = useState<Set<number>>(new Set());
+    const [checkEnharmonic, setCheckEnharmonic] = useState(true);
     const inputStartTimes = useRef<Map<number, number>>(new Map());
     const repeatIntervalRef = useRef<number | null>(null);
     const { settings: notationSettings } = useNotation();
+
+    const toggleEnharmonic = useCallback(() => {
+        setCheckEnharmonic(prev => !prev);
+    }, []);
 
     const toggleBassAsRoot = useCallback(() => {
         setForceBassAsRoot(prev => !prev);
@@ -96,7 +103,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const { initAudio, startNote, stopNote, playTone, getFrequency, setNoteVolume, setNoteWaveform } = useAudio();
 
-    const analyze = useCallback((notes: Set<number>, selectedIndex: number = 0, bassAsRoot: boolean = false) => {
+    const analyze = useCallback((notes: Set<number>, selectedIndex: number = 0, bassAsRoot: boolean = false, useEnharmonic: boolean = true) => {
         if (notes.size === 0) {
             setChordOptions([]);
             setAnalysis({
@@ -122,7 +129,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         let names: string[] = [];
         try {
-            names = spellingNotes(chordVec, true, false, true, false);
+            names = spellingNotes(chordVec, true, false, useEnharmonic, false);
         } catch (e) {
             console.error(e);
         }
@@ -148,7 +155,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
             const rootIndex = inverse_select(root, chordVec).data[0];
             const rotatedVec = chordVec.rototranslate(rootIndex, chordVec.data.length, false);
-            const rotatedNames = spellingNotes(rotatedVec, true, false, true, false);
+            const rotatedNames = spellingNotes(rotatedVec, true, false, useEnharmonic, false);
 
             const modulo = (n: number, m: number) => ((n % m) + m) % m;
             for (let i = 0; i < rotatedNames.length; i++) {
@@ -225,8 +232,8 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, []);
 
     useEffect(() => {
-        analyze(activeNotes, selectedOptionIndex, forceBassAsRoot);
-    }, [activeNotes, selectedOptionIndex, forceBassAsRoot, analyze]);
+        analyze(activeNotes, selectedOptionIndex, forceBassAsRoot, checkEnharmonic);
+    }, [activeNotes, selectedOptionIndex, forceBassAsRoot, analyze, checkEnharmonic]);
 
     const playChordNotes = useCallback((notes: Set<number>) => {
         if (notes.size === 0) return;
@@ -505,7 +512,9 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             setAudioMode,
             startInput,
             stopInput,
-            lockedNotes
+            lockedNotes,
+            checkEnharmonic,
+            toggleEnharmonic
         }}>
             {children}
         </HarmonicContext.Provider>
