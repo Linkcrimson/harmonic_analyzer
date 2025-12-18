@@ -13,7 +13,7 @@ export const Header: React.FC = () => {
                     {midiConnected && (
                         <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
                             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                            <span>MIDI</span>
+                            <span className="hidden sm:inline">MIDI</span>
                         </div>
                     )}
                     {sustainPedal && (
