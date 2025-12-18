@@ -11,6 +11,10 @@ const BLACK_KEY_LINES = [1, 2, 4, 5, 6, 8, 9, 11, 12, 13];
 const MINIMAP_HEIGHT = 40;
 const BLACK_KEY_HEIGHT_PERCENT = 60;
 
+// ASPECT RATIO CORRECTION FOR RADIUS
+const RADIUS_X = 1.0;
+const RADIUS_Y = 6.0;
+
 // Function to map interval to CSS variable or color
 const getIntervalColor = (interval?: string) => {
     switch (interval) {
@@ -116,44 +120,111 @@ export const KeyboardMinimap: React.FC<KeyboardMinimapProps> = ({ scrollContaine
         isDragging.current = false;
     };
 
-    // Generate SVG path data for wireframe
+    // Helper to generate key shape
+    const generateKeyShape = useCallback((gridIdx: number, isBlack: boolean) => {
+        const wKeyWidth = 100 / WHITE_KEY_COUNT;
+        const rx = RADIUS_X;
+        const ry = RADIUS_Y;
+
+        if (isBlack) {
+            // Black Key Shape
+            const x = gridIdx * wKeyWidth;
+            const bkWidth = wKeyWidth * 0.6;
+            const xLeft = x - (bkWidth / 2);
+            const xRight = x + (bkWidth / 2);
+
+            const H = BLACK_KEY_HEIGHT_PERCENT;
+
+            // Rounded Bottom
+            return `M ${xLeft} 0 L ${xLeft} ${H - ry} A ${rx} ${ry} 0 0 0 ${xLeft + rx} ${H} L ${xRight - rx} ${H} A ${rx} ${ry} 0 0 0 ${xRight} ${H - ry} L ${xRight} 0 Z`;
+        } else {
+            // White Key Shape
+            const wL = gridIdx * wKeyWidth;
+            const wR = (gridIdx + 1) * wKeyWidth;
+
+            const hasBlackLeft = BLACK_KEY_LINES.includes(gridIdx);
+            const hasBlackRight = BLACK_KEY_LINES.includes(gridIdx + 1);
+
+            const bkHalWidth = (wKeyWidth * 0.6) / 2;
+            const H = BLACK_KEY_HEIGHT_PERCENT;
+
+            // X coordinates at top/shoulders
+            const xTopLeft = hasBlackLeft ? wL + bkHalWidth : wL;
+            const xTopRight = hasBlackRight ? wR - bkHalWidth : wR;
+
+            let d = '';
+
+            // Start Top Left
+            d += `M ${xTopLeft} 0 `;
+
+            // Left Shoulder (matches Right Side of Left Black Key)
+            if (hasBlackLeft) {
+                // Go down to rounded corner start
+                d += `L ${xTopLeft} ${H - ry} `;
+                // Arc IN (Sweep 1) to (xTopLeft - rx, H)
+                d += `A ${rx} ${ry} 0 0 1 ${xTopLeft - rx} ${H} `;
+                // Line to wL
+                d += `L ${wL} ${H} `;
+            }
+
+            // Down to Bottom Left (rounded)
+            d += `L ${wL} ${100 - ry} `;
+            d += `A ${rx} ${ry} 0 0 0 ${wL + rx} 100 `;
+
+            // Line to Bottom Right
+            d += `L ${wR - rx} 100 `;
+            d += `A ${rx} ${ry} 0 0 0 ${wR} ${100 - ry} `;
+
+            // Up to Right Shoulder
+            if (hasBlackRight) {
+                // Line up to H (from bottom right)
+                d += `L ${wR} ${H} `;
+                // Line Left to rounded corner start (xTopRight + rx)
+                d += `L ${xTopRight + rx} ${H} `;
+                // Arc UP/LEFT (Sweep 1) to (xTopRight, H - ry)
+                // Wait. Start point is (xTopRight+rx, H). End is (xTopRight, H-ry).
+                // Curve is "concave" relative to white key? 
+                // Matches Black Key "Left Bottom" corner.
+                // Black key Left Bottom: ... L xLeft (H-ry) A ... xLeft+rx H.
+                // We are tracing REVERSE.
+                // From (xTopRight+rx, H) to (xTopRight, H-ry).
+                // Correct.
+                d += `A ${rx} ${ry} 0 0 1 ${xTopRight} ${H - ry} `;
+                // Line UP to 0
+                d += `L ${xTopRight} 0 `;
+            } else {
+                d += `L ${wR} 0 `;
+            }
+
+            d += `Z`;
+            return d;
+        }
+    }, []);
+
+    // Generate SVG path data for wireframe (ALL keys)
     const { whiteKeysPath, blackKeysPath } = useMemo(() => {
         let wPath = '';
         let bPath = '';
-        const wKeyWidth = 100 / WHITE_KEY_COUNT;
 
-        // Draw Left Edge
-        wPath += `M 0 0 L 0 100 `;
-
-        // Draw Internal Vertical Lines
-        for (let i = 1; i < WHITE_KEY_COUNT; i++) {
-            const x = i * wKeyWidth;
-            if (BLACK_KEY_LINES.includes(i)) {
-                wPath += `M ${x} ${BLACK_KEY_HEIGHT_PERCENT} L ${x} 100 `;
-
-                const bkWidth = wKeyWidth * 0.6;
-                const xLeft = x - (bkWidth / 2);
-                const xRight = x + (bkWidth / 2);
-
-                bPath += `M ${xLeft} 0 L ${xLeft} ${BLACK_KEY_HEIGHT_PERCENT} L ${xRight} ${BLACK_KEY_HEIGHT_PERCENT} L ${xRight} 0 `;
-            } else {
-                wPath += `M ${x} 0 L ${x} 100 `;
-            }
+        // Generate White Keys
+        for (let i = 0; i < WHITE_KEY_COUNT; i++) {
+            wPath += generateKeyShape(i, false) + ' ';
         }
 
-        // Right/Bottom Edges
-        wPath += `M 100 0 L 100 100 `;
-        wPath += `M 0 100 L 100 100 `;
+        // Generate Black Keys
+        // Iterate lines that have black keys
+        BLACK_KEY_LINES.forEach(lineIdx => {
+            bPath += generateKeyShape(lineIdx, true) + ' ';
+        });
 
         return { whiteKeysPath: wPath, blackKeysPath: bPath };
-    }, []);
+    }, [generateKeyShape]);
 
     // Generate FILLED paths for ACTIVE keys
     const activeKeyShapes = useMemo(() => {
         if (activeNotes.size === 0) return [];
 
         const shapes: { d: string, color: string }[] = [];
-        const wKeyWidth = 100 / WHITE_KEY_COUNT;
 
         const getGridIndex = (noteId: number) => {
             const octave = Math.floor(noteId / 12);
@@ -176,98 +247,16 @@ export const KeyboardMinimap: React.FC<KeyboardMinimapProps> = ({ scrollContaine
 
             if (black) {
                 const lineIdx = gridIdx + 1;
-                const x = lineIdx * wKeyWidth;
-                const bkWidth = wKeyWidth * 0.6;
-                const xLeft = x - (bkWidth / 2);
-                const xRight = x + (bkWidth / 2);
-
-                // Closed Rect for fill
-                const d = `M ${xLeft} 0 L ${xLeft} ${BLACK_KEY_HEIGHT_PERCENT} L ${xRight} ${BLACK_KEY_HEIGHT_PERCENT} L ${xRight} 0 Z`;
+                const d = generateKeyShape(lineIdx, true);
                 shapes.push({ d, color });
             } else {
-                const wL = gridIdx * wKeyWidth;
-                const wR = (gridIdx + 1) * wKeyWidth;
-
-                const leftLineIdx = gridIdx;
-                const rightLineIdx = gridIdx + 1;
-
-                const hasBlackLeft = BLACK_KEY_LINES.includes(leftLineIdx);
-                const hasBlackRight = BLACK_KEY_LINES.includes(rightLineIdx);
-
-                // Key visual boundaries (taking into account black keys eating into top width)
-                const bkHalWidth = (wKeyWidth * 0.6) / 2;
-
-                // Top Left X: if black key on left, start after it. Else start at line.
-                const xTopLeft = hasBlackLeft ? wL + bkHalWidth : wL;
-                // Top Right X: if black key on right, end before it.
-                const xTopRight = hasBlackRight ? wR - bkHalWidth : wR;
-
-                // Bottom is always full width
-                // Shape: 
-                // Move TopLeft -> Line Left/Down? 
-                // Actually:
-                // 1. Start TopLeft (at y=0)
-                // 2. Down to BottomLeft? 
-                //    Wait, complex shape.
-                //    If hasBlackLeft:
-                //       Start at (xTopLeft, 0) -> Down to (xTopLeft, height)? NO.
-                //       White key goes AROUND black key.
-                //       It occupies the space UNDER the black key half?
-                //       No, in my wireframe logic, the black key is ON TOP.
-                //       So for FILL, I can just fill the whole slot (wL to wR) and let Black Key draw ON TOP?
-                //       YES. Much simpler. SVG Painter's algorithm.
-                //       If I draw white key rect first, then black key rect.
-                //       BUT, standard piano white keys are notched.
-                //       If I fill a white key rect fully, it will show behind the adjacent black key?
-                //       If black key is transparent/outlined, yes.
-                //       My black keys are outlines in the WIREFRAME layer.
-                //       In the ACTIVE layer, I am filling them.
-                //       
-                //       If key C is active (white) and C# is INACTIVE (transparent wireframe):
-                //       If I fill C as a full rect, color will bleed into C# area. BAD.
-                //       So I MUST cutout the shape.
-
-                let d = '';
-
-                // Start Top Left
-                d += `M ${xTopLeft} 0 `;
-
-                // If hasBlackLeft, we go Down to BlackKeyHeight, then Left to wL
-                if (hasBlackLeft) {
-                    d += `L ${xTopLeft} ${BLACK_KEY_HEIGHT_PERCENT} L ${wL} ${BLACK_KEY_HEIGHT_PERCENT} `;
-                } else {
-                    // straight down (implicit, next point controls)
-                    // Actually simplest is trace the perimeter.
-                }
-
-                // Go to Bottom Left
-                d += `L ${wL} 100 `;
-
-                // Go to Bottom Right
-                d += `L ${wR} 100 `;
-
-                // Go to Top Right (complex path)
-                if (hasBlackRight) {
-                    // We are at Bottom Right (wR, 100).
-                    // Up to BlackKeyHeight at wR
-                    d += `L ${wR} ${BLACK_KEY_HEIGHT_PERCENT} `;
-                    // Left to xTopRight
-                    d += `L ${xTopRight} ${BLACK_KEY_HEIGHT_PERCENT} `;
-                    // Up to 0
-                    d += `L ${xTopRight} 0 `;
-                } else {
-                    d += `L ${wR} 0 `;
-                }
-
-                // Close to Start
-                d += `Z`;
-
+                const d = generateKeyShape(gridIdx, false);
                 shapes.push({ d, color });
             }
         });
 
         return shapes;
-    }, [activeNotes, analysis]);
+    }, [activeNotes, analysis, generateKeyShape]);
 
     return (
         <div
@@ -292,7 +281,6 @@ export const KeyboardMinimap: React.FC<KeyboardMinimapProps> = ({ scrollContaine
                 {/* Layer 0: Active Key FILLS (Behind Grid) */}
                 <g>
                     {activeKeyShapes.map((s, i) => (
-                        // Using opacity to blend nicely
                         <path key={i} d={s.d} fill={s.color} stroke="none" vectorEffect="non-scaling-stroke" opacity="0.8" />
                     ))}
                 </g>
@@ -303,15 +291,14 @@ export const KeyboardMinimap: React.FC<KeyboardMinimapProps> = ({ scrollContaine
                     <path vectorEffect="non-scaling-stroke" d={blackKeysPath} />
                 </g>
 
-                {/* Layer 2: Viewport Highlight (Blue Glow) */}
+                {/* Layer 2: Viewport Highlight (Light Gray) */}
                 <g
-                    stroke="#60a5fa"
+                    stroke="#9db0ceff"
                     strokeWidth="2"
                     fill="none"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     clipPath="url(#viewportClip)"
-                    style={{ filter: 'drop-shadow(0 0 3px rgba(59, 130, 246, 0.8))' }}
                 >
                     <path vectorEffect="non-scaling-stroke" d={whiteKeysPath} />
                     <path vectorEffect="non-scaling-stroke" d={blackKeysPath} />
