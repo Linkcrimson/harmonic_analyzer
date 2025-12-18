@@ -85,8 +85,8 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
     }, [activeNotes, analysis.intervals]);
 
     return (
-        <div className="w-full flex justify-center items-center gap-3 px-2 py-3 border-b border-[#222] bg-[#0a0a0a] relative z-[100]">
-            <div className="absolute left-2 md:left-4">
+        <div className="w-full flex flex-col md:flex-row justify-center items-center gap-3 px-2 py-3 border-b border-[#222] bg-[#0a0a0a] relative z-[100]">
+            <div className="w-full md:w-auto md:absolute md:left-4 flex justify-center md:block mb-1 md:mb-0">
                 <Header />
             </div>
 

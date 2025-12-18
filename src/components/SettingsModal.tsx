@@ -35,9 +35,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="flex border-b border-[#333] mb-4 overflow-x-auto">
+                <div className="flex border-b border-[#333] mb-4 overflow-x-auto custom-scrollbar-hide">
                     <button
-                        className={`flex-1 pb-3 text-sm font-medium transition-colors relative min-w-[80px] ${activeTab === 'input' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                        className={`flex-none px-4 pb-3 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'input' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
                         onClick={() => setActiveTab('input')}
                     >
                         {t('settings.input')}
@@ -46,7 +46,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         )}
                     </button>
                     <button
-                        className={`flex-1 pb-3 text-sm font-medium transition-colors relative ${activeTab === 'notation' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                        className={`flex-none px-4 pb-3 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'notation' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
                         onClick={() => setActiveTab('notation')}
                     >
                         {t('settings.notation')}
@@ -55,7 +55,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         )}
                     </button>
                     <button
-                        className={`flex-1 pb-3 text-sm font-medium transition-colors relative ${activeTab === 'appearance' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                        className={`flex-none px-4 pb-3 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'appearance' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
                         onClick={() => setActiveTab('appearance')}
                     >
                         {t('settings.theme')}
@@ -64,7 +64,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         )}
                     </button>
                     <button
-                        className={`flex-1 pb-3 text-sm font-medium transition-colors relative min-w-[80px] ${activeTab === 'language' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                        className={`flex-none px-4 pb-3 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'language' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
                         onClick={() => setActiveTab('language')}
                     >
                         {t('settings.language')}
@@ -73,7 +73,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         )}
                     </button>
                     <button
-                        className={`flex-1 pb-3 text-sm font-medium transition-colors relative ${activeTab === 'install' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                        className={`flex-none px-4 pb-3 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'install' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
                         onClick={() => setActiveTab('install')}
                     >
                         {t('settings.app')}
