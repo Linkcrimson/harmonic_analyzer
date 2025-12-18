@@ -13,9 +13,11 @@ export interface TooltipInfo {
 interface TooltipProps {
     info: TooltipInfo;
     forcePosition?: 'top' | 'bottom';
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({ info, forcePosition }) => {
+export const Tooltip: React.FC<TooltipProps> = ({ info, forcePosition, onMouseEnter, onMouseLeave }) => {
     // Smart Positioning System
     const padding = 10; // safe area from edges of the screen
     const tooltipWidth = 220; // Fixed width
@@ -59,12 +61,14 @@ export const Tooltip: React.FC<TooltipProps> = ({ info, forcePosition }) => {
 
     return ReactDOM.createPortal(
         <div
-            className="fixed z-[9999] pointer-events-none px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-sm text-gray-200 w-[220px] text-center backdrop-blur-sm transition-all duration-75"
+            className="fixed z-[9999] px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-sm text-gray-200 w-[220px] text-center backdrop-blur-sm transition-all duration-75"
             style={{
                 left: boxLeft,
                 top: topPos,
                 transform: `translateY(${transformY})`,
             }}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
         >
             <div className="font-bold text-[#e0e0e0] mb-2 uppercase tracking-wider text-xs border-b border-[#333] pb-1">
                 {info.title}

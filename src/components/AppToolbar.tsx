@@ -26,6 +26,47 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
     const { activeNotes, analysis, forceBassAsRoot, toggleBassAsRoot, checkEnharmonic, toggleEnharmonic } = useHarmonic();
     const { language } = useLanguage();
 
+    // Timeout refs to manage delay closing
+    const enharmonicTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const bassTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const viewModeTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const settingsTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Click outside handler to close all tooltips on mobile interactions
+    React.useEffect(() => {
+
+
+        window.addEventListener('scroll', () => {
+            // Close tooltips on scroll to prevent stuck floating
+            setEnharmonicHoverInfo(null);
+            setBassHoverInfo(null);
+            setViewModeHoverInfo(null);
+            setSettingsHoverInfo(null);
+        }, { capture: true });
+
+        return () => window.removeEventListener('scroll', () => { });
+    }, []);
+
+    // Helper to clear timeout
+    const clearTooltipTimeout = (ref: React.MutableRefObject<ReturnType<typeof setTimeout> | null>) => {
+        if (ref.current) {
+            clearTimeout(ref.current);
+            ref.current = null;
+        }
+    };
+
+    // Helper to start close timeout
+    const startCloseTimeout = (
+        ref: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
+        setter: React.Dispatch<React.SetStateAction<TooltipInfo | null>>
+    ) => {
+        if (ref.current) clearTimeout(ref.current);
+        ref.current = setTimeout(() => {
+            setter(null);
+        }, 300); // 300ms delay to allow moving to tooltip
+    };
+
+
     // --- Dynamic Icon Logic (Restored from AnalysisView) ---
     // 1. Cards Icon (shows active analysis components)
     const cardsIconColors = useMemo(() => {
@@ -85,7 +126,12 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
     }, [activeNotes, analysis.intervals]);
 
     return (
-        <div className="w-full flex flex-col md:flex-row justify-center items-center gap-3 px-2 py-3 border-b border-[#222] bg-[#0a0a0a] relative z-[100]">
+        <div className="w-full flex flex-col md:flex-row justify-center items-center gap-3 px-2 py-3 border-b border-[#222] bg-[#0a0a0a] relative z-[100]"
+            onClick={() => {
+                // Global click in toolbar area acts as "close other tooltips" if needed, 
+                // but specific buttons handle their own.
+            }}
+        >
             <div className="w-full md:w-auto md:absolute md:left-4 flex justify-center md:block mb-1 md:mb-0">
                 <Header />
             </div>
@@ -96,12 +142,19 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                 <div
                     className="flex items-center h-10 md:h-11 bg-[#1a1a1a] p-1 border border-[#333] rounded-xl shadow-inner relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50"
                     onMouseEnter={(e) => {
+                        clearTooltipTimeout(enharmonicTimeoutRef);
                         const rect = e.currentTarget.getBoundingClientRect();
                         setEnharmonicHoverInfo({
                             title: language === 'it' ? "ORTOGRAFIA MUSICALE" : "MUSICAL SPELLING",
                             content: (
                                 <div className="flex flex-col gap-3 text-left">
-                                    <div>
+                                    <div
+                                        className={`cursor-pointer hover:bg-white/5 p-1 -m-1 rounded transition-colors ${!checkEnharmonic ? 'opacity-50 hover:opacity-100' : ''}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (!checkEnharmonic) toggleEnharmonic();
+                                        }}
+                                    >
                                         <div className={`font-bold mb-0.5 flex items-center gap-1 ${checkEnharmonic ? 'text-blue-400' : 'text-gray-400'}`}>
                                             <span className="font-serif text-lg">♮</span> {language === 'it' ? "Ortografia Semplificata" : "Simplified Spelling"}
                                         </div>
@@ -112,13 +165,21 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                                         </div>
                                     </div>
                                     <div className="border-t border-[#333] pt-2">
-                                        <div className={`font-bold mb-0.5 flex items-center gap-1 ${!checkEnharmonic ? 'text-blue-400' : 'text-gray-400'}`}>
-                                            <span className="font-serif text-lg">𝄫</span> {language === 'it' ? "Rigore Armonico" : "Harmonic Rigor"}
-                                        </div>
-                                        <div className="text-[10px] text-gray-500 leading-tight">
-                                            {language === 'it'
-                                                ? "Le note sono scritte rispettando la loro funzione teorica."
-                                                : "Notes are written respecting their theoretical function."}
+                                        <div
+                                            className={`cursor-pointer hover:bg-white/5 p-1 -m-1 rounded transition-colors ${checkEnharmonic ? 'opacity-50 hover:opacity-100' : ''}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (checkEnharmonic) toggleEnharmonic();
+                                            }}
+                                        >
+                                            <div className={`font-bold mb-0.5 flex items-center gap-1 ${!checkEnharmonic ? 'text-blue-400' : 'text-gray-400'}`}>
+                                                <span className="font-serif text-lg">𝄫</span> {language === 'it' ? "Rigore Armonico" : "Harmonic Rigor"}
+                                            </div>
+                                            <div className="text-[10px] text-gray-500 leading-tight">
+                                                {language === 'it'
+                                                    ? "Le note sono scritte rispettando la loro funzione teorica."
+                                                    : "Notes are written respecting their theoretical function."}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -129,41 +190,18 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                             clientY: e.clientY
                         });
                     }}
-                    onMouseLeave={() => setEnharmonicHoverInfo(null)}
-                    onClick={(e) => {
+                    onMouseLeave={() => startCloseTimeout(enharmonicTimeoutRef, setEnharmonicHoverInfo)}
+                    onClick={() => {
+                        // Toggle logic for the main button
                         toggleEnharmonic();
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setEnharmonicHoverInfo({
-                            title: language === 'it' ? "ORTOGRAFIA MUSICALE" : "MUSICAL SPELLING",
-                            content: (
-                                <div className="flex flex-col gap-3 text-left">
-                                    <div>
-                                        <div className={`font-bold mb-0.5 flex items-center gap-1 ${!checkEnharmonic ? 'text-blue-400' : 'text-gray-400'}`}>
-                                            <span className="font-serif text-lg">♮</span> {language === 'it' ? "Ortografia Semplificata" : "Simplified Spelling"}
-                                        </div>
-                                        <div className="text-[10px] text-gray-500 leading-tight">
-                                            {language === 'it'
-                                                ? "La priorità è la facilità di lettura, non la correttezza armonica."
-                                                : "Priority is readability, not harmonic correctness."}
-                                        </div>
-                                    </div>
-                                    <div className="border-t border-[#333] pt-2">
-                                        <div className={`font-bold mb-0.5 flex items-center gap-1 ${checkEnharmonic ? 'text-blue-400' : 'text-gray-400'}`}>
-                                            <span className="font-serif text-lg">𝄫</span> {language === 'it' ? "Rigore Armonico" : "Harmonic Rigor"}
-                                        </div>
-                                        <div className="text-[10px] text-gray-500 leading-tight">
-                                            {language === 'it'
-                                                ? "Le note sono scritte rispettando la loro funzione teorica."
-                                                : "Notes are written respecting their theoretical function."}
-                                        </div>
-                                    </div>
-                                </div>
-                            ),
-                            x: rect.left + (rect.width / 2),
-                            y: rect.bottom,
-                            containerWidth: rect.width,
-                            clientY: e.clientY
-                        });
+                        // Re-open/Update tooltip immediately (in case it was closed or needs update)
+                        // Force visible
+                        clearTooltipTimeout(enharmonicTimeoutRef);
+                        // We duplicate logic here because state needs to reflect new value immediately
+                        // But wait... if we toggle, re-render happens. 
+                        // The onMouseEnter content uses `checkEnharmonic` from closure or updated render?
+                        // On re-render, the TooltipInfo in state is STALE.
+                        // We need to update the tooltip info when `checkEnharmonic` changes IF tooltip is open.
                     }}
                 >
                     {/* Animated Spelling Label - To the LEFT */}
@@ -184,19 +222,33 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                         </div>
                     </div>
 
-                    {enharmonicHoverInfo && <Tooltip info={enharmonicHoverInfo} forcePosition="bottom" />}
+                    {enharmonicHoverInfo && (
+                        <Tooltip
+                            info={enharmonicHoverInfo}
+                            forcePosition="bottom"
+                            onMouseEnter={() => clearTooltipTimeout(enharmonicTimeoutRef)}
+                            onMouseLeave={() => startCloseTimeout(enharmonicTimeoutRef, setEnharmonicHoverInfo)}
+                        />
+                    )}
                 </div>
 
                 {/* Bass as Root Toggle */}
                 <div
                     className={`flex items-center h-10 md:h-11 p-1 bg-[#1a1a1a] border border-[#333] rounded-xl relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50 ${forceBassAsRoot ? 'shadow-[0_0_15px_rgba(59,130,246,0.2)]' : ''}`}
                     onMouseEnter={(e) => {
+                        clearTooltipTimeout(bassTimeoutRef);
                         const rect = e.currentTarget.getBoundingClientRect();
                         setBassHoverInfo({
                             title: language === 'it' ? "RIFERIMENTO FONDAMENTALE" : "ROOT REFERENCE",
                             content: (
                                 <div className="flex flex-col gap-3 text-left">
-                                    <div>
+                                    <div
+                                        className={`cursor-pointer hover:bg-white/5 p-1 -m-1 rounded transition-colors ${!forceBassAsRoot ? 'opacity-50 hover:opacity-100' : ''}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (!forceBassAsRoot) toggleBassAsRoot();
+                                        }}
+                                    >
                                         <div className={`font-bold mb-0.5 flex items-center gap-1 ${forceBassAsRoot ? 'text-blue-400' : 'text-gray-400'}`}>
                                             {language === 'it' ? "Basso come Fondamentale" : "Bass as Root"}
                                         </div>
@@ -207,13 +259,21 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                                         </div>
                                     </div>
                                     <div className="border-t border-[#333] pt-2">
-                                        <div className={`font-bold mb-0.5 flex items-center gap-1 ${!forceBassAsRoot ? 'text-blue-400' : 'text-gray-400'}`}>
-                                            {language === 'it' ? "Fondamentale Automatica" : "Automatic Root"}
-                                        </div>
-                                        <div className="text-[10px] text-gray-500 leading-tight">
-                                            {language === 'it'
-                                                ? "Analisi intelligente: il sistema identifica la fondamentale teorica corretta indipendentemente dal rivolto."
-                                                : "Smart analysis: the system identifies the correct theoretical root regardless of the inversion."}
+                                        <div
+                                            className={`cursor-pointer hover:bg-white/5 p-1 -m-1 rounded transition-colors ${forceBassAsRoot ? 'opacity-50 hover:opacity-100' : ''}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (forceBassAsRoot) toggleBassAsRoot();
+                                            }}
+                                        >
+                                            <div className={`font-bold mb-0.5 flex items-center gap-1 ${!forceBassAsRoot ? 'text-blue-400' : 'text-gray-400'}`}>
+                                                {language === 'it' ? "Fondamentale Automatica" : "Automatic Root"}
+                                            </div>
+                                            <div className="text-[10px] text-gray-500 leading-tight">
+                                                {language === 'it'
+                                                    ? "Analisi intelligente: il sistema identifica la fondamentale teorica corretta indipendentemente dal rivolto."
+                                                    : "Smart analysis: the system identifies the correct theoretical root regardless of the inversion."}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -224,41 +284,11 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                             clientY: e.clientY
                         });
                     }}
-                    onMouseLeave={() => setBassHoverInfo(null)}
-                    onClick={(e) => {
+                    onMouseLeave={() => startCloseTimeout(bassTimeoutRef, setBassHoverInfo)}
+                    onClick={() => {
                         toggleBassAsRoot();
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setBassHoverInfo({
-                            title: language === 'it' ? "RIFERIMENTO FONDAMENTALE" : "ROOT REFERENCE",
-                            content: (
-                                <div className="flex flex-col gap-3 text-left">
-                                    <div>
-                                        <div className={`font-bold mb-0.5 flex items-center gap-1 ${!forceBassAsRoot ? 'text-blue-400' : 'text-gray-400'}`}>
-                                            {language === 'it' ? "Basso come Fondamentale" : "Bass as Root"}
-                                        </div>
-                                        <div className="text-[10px] text-gray-500 leading-tight">
-                                            {language === 'it'
-                                                ? "Considera la nota più bassa come la fondamentale dell'accordo, ignorando i rivolti."
-                                                : "Treats the lowest note as the chord's root, bypassing theoretical inversions."}
-                                        </div>
-                                    </div>
-                                    <div className="border-t border-[#333] pt-2">
-                                        <div className={`font-bold mb-0.5 flex items-center gap-1 ${forceBassAsRoot ? 'text-blue-400' : 'text-gray-400'}`}>
-                                            {language === 'it' ? "Fondamentale Automatica" : "Automatic Root"}
-                                        </div>
-                                        <div className="text-[10px] text-gray-500 leading-tight">
-                                            {language === 'it'
-                                                ? "Analisi intelligente: il sistema identifica la fondamentale teorica corretta indipendentemente dal rivolto."
-                                                : "Smart analysis: the system identifies the correct theoretical root regardless of the inversion."}
-                                        </div>
-                                    </div>
-                                </div>
-                            ),
-                            x: rect.left + (rect.width / 2),
-                            y: rect.bottom,
-                            containerWidth: rect.width,
-                            clientY: e.clientY
-                        });
+                        // See note above about stale state on toggle
+                        clearTooltipTimeout(bassTimeoutRef);
                     }}
                 >
                     {/* Animated Root Label - To the LEFT */}
@@ -296,19 +326,33 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                         </svg>
                     </div>
 
-                    {bassHoverInfo && <Tooltip info={bassHoverInfo} forcePosition="bottom" />}
+                    {bassHoverInfo && (
+                        <Tooltip
+                            info={bassHoverInfo}
+                            forcePosition="bottom"
+                            onMouseEnter={() => clearTooltipTimeout(bassTimeoutRef)}
+                            onMouseLeave={() => startCloseTimeout(bassTimeoutRef, setBassHoverInfo)}
+                        />
+                    )}
                 </div>
 
                 {/* View Mode Toggle */}
                 <div
                     className="flex items-center h-10 md:h-11 bg-[#1a1a1a] p-1 border border-[#333] rounded-xl shadow-inner relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50"
                     onMouseEnter={(e) => {
+                        clearTooltipTimeout(viewModeTimeoutRef);
                         const rect = e.currentTarget.getBoundingClientRect();
                         setViewModeHoverInfo({
                             title: language === 'it' ? "MODALITÀ VISTA" : "VIEW MODE",
                             content: (
                                 <div className="flex flex-col gap-3 text-left">
-                                    <div>
+                                    <div
+                                        className={`cursor-pointer hover:bg-white/5 p-1 -m-1 rounded transition-colors ${viewMode !== 'circle' ? 'opacity-50 hover:opacity-100' : ''}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (viewMode !== 'circle') setViewMode('circle');
+                                        }}
+                                    >
                                         <div className={`font-bold mb-0.5 flex items-center gap-1 ${viewMode === 'circle' ? 'text-blue-400' : 'text-gray-400'}`}>
                                             {language === 'it' ? "Cerchio Armonico" : "Harmonic Circle"}
                                         </div>
@@ -319,13 +363,21 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                                         </div>
                                     </div>
                                     <div className="border-t border-[#333] pt-2">
-                                        <div className={`font-bold mb-0.5 flex items-center gap-1 ${viewMode === 'cards' ? 'text-blue-400' : 'text-gray-400'}`}>
-                                            {language === 'it' ? "Schede di Analisi" : "Analysis Cards"}
-                                        </div>
-                                        <div className="text-[10px] text-gray-500 leading-tight">
-                                            {language === 'it'
-                                                ? "Dati analitici dettagliati e scomposizione delle componenti dell'accordo."
-                                                : "Detailed analytical data and breakdown of chord components."}
+                                        <div
+                                            className={`cursor-pointer hover:bg-white/5 p-1 -m-1 rounded transition-colors ${viewMode !== 'cards' ? 'opacity-50 hover:opacity-100' : ''}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (viewMode !== 'cards') setViewMode('cards');
+                                            }}
+                                        >
+                                            <div className={`font-bold mb-0.5 flex items-center gap-1 ${viewMode === 'cards' ? 'text-blue-400' : 'text-gray-400'}`}>
+                                                {language === 'it' ? "Schede di Analisi" : "Analysis Cards"}
+                                            </div>
+                                            <div className="text-[10px] text-gray-500 leading-tight">
+                                                {language === 'it'
+                                                    ? "Dati analitici dettagliati e scomposizione delle componenti dell'accordo."
+                                                    : "Detailed analytical data and breakdown of chord components."}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -336,53 +388,15 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                             clientY: e.clientY
                         });
                     }}
-                    onMouseLeave={() => setViewModeHoverInfo(null)}
-                    onClick={(e) => {
+                    onMouseLeave={() => startCloseTimeout(viewModeTimeoutRef, setViewModeHoverInfo)}
+                    onClick={() => {
                         const nextMode = viewMode === 'circle' ? 'cards' : 'circle';
                         setViewMode(nextMode);
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setViewModeHoverInfo({
-                            title: language === 'it' ? "MODALITÀ VISTA" : "VIEW MODE",
-                            content: (
-                                <div className="flex flex-col gap-3 text-left">
-                                    <div>
-                                        <div className={`font-bold mb-0.5 flex items-center gap-1 ${nextMode === 'circle' ? 'text-blue-400' : 'text-gray-400'}`}>
-                                            {language === 'it' ? "Cerchio Armonico" : "Harmonic Circle"}
-                                        </div>
-                                        <div className="text-[10px] text-gray-500 leading-tight">
-                                            {language === 'it'
-                                                ? "Visualizzazione spaziale delle relazioni tra le note e le loro funzioni."
-                                                : "Spatial visualization of relationships between notes and their functions."}
-                                        </div>
-                                    </div>
-                                    <div className="border-t border-[#333] pt-2">
-                                        <div className={`font-bold mb-0.5 flex items-center gap-1 ${nextMode === 'cards' ? 'text-blue-400' : 'text-gray-400'}`}>
-                                            {language === 'it' ? "Schede di Analisi" : "Analysis Cards"}
-                                        </div>
-                                        <div className="text-[10px] text-gray-500 leading-tight">
-                                            {language === 'it'
-                                                ? "Dati analitici dettagliati e scomposizione delle componenti dell'accordo."
-                                                : "Detailed analytical data and breakdown of chord components."}
-                                        </div>
-                                    </div>
-                                </div>
-                            ),
-                            x: rect.left + (rect.width / 2),
-                            y: rect.bottom,
-                            containerWidth: rect.width,
-                            clientY: e.clientY
-                        });
+                        clearTooltipTimeout(viewModeTimeoutRef);
                     }}
                 >
                     <div className="h-full flex items-center px-3 rounded-lg transition-colors">
                         {viewMode === 'circle' ? (
-                            // Show "Cards" Icon (when in circle mode, clicking switches to cards)
-                            // Corrected Logic: The icon should show the CURRENT mode or the NEXT mode?
-                            // Standard behavior: Toggle usually shows the state it IS or the state it WILL BE.
-                            // In AnalysisView, if viewMode === 'circle', it showed the Cards Icon (!).
-                            // Wait, let's check AnalysisView again:
-                            // {viewMode === 'circle' ? ( <svg ... cards icons ... /> ) : ( <svg ... circle icon ... /> )}
-                            // Yes, it acts as "Go to Cards" button when in Circle mode.
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                                 <rect x="2" y="2" width="9" height="9" rx="2" fill={cardsIconColors.root} />
                                 <rect x="13" y="2" width="9" height="9" rx="2" fill={cardsIconColors.quality} />
@@ -390,7 +404,6 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                                 <rect x="13" y="13" width="9" height="9" rx="2" fill={cardsIconColors.func} />
                             </svg>
                         ) : (
-                            // Show "Circle" Icon
                             <svg width="24" height="24" viewBox="0 0 20 20">
                                 <circle cx="10" cy="10" r="9" stroke="#555" strokeWidth="1.5" fill="none" />
                                 {circleIconPoints.map((p, i) => (
@@ -399,13 +412,21 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                             </svg>
                         )}
                     </div>
-                    {viewModeHoverInfo && <Tooltip info={viewModeHoverInfo} forcePosition="bottom" />}
+                    {viewModeHoverInfo && (
+                        <Tooltip
+                            info={viewModeHoverInfo}
+                            forcePosition="bottom"
+                            onMouseEnter={() => clearTooltipTimeout(viewModeTimeoutRef)}
+                            onMouseLeave={() => startCloseTimeout(viewModeTimeoutRef, setViewModeHoverInfo)}
+                        />
+                    )}
                 </div>
 
                 {/* Settings Toggle */}
                 <div
                     className="relative"
                     onMouseEnter={(e) => {
+                        clearTooltipTimeout(settingsTimeoutRef);
                         const rect = e.currentTarget.getBoundingClientRect();
                         setSettingsHoverInfo({
                             title: language === 'it' ? "IMPOSTAZIONI" : "SETTINGS",
@@ -420,8 +441,11 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                             clientY: e.clientY
                         });
                     }}
-                    onMouseLeave={() => setSettingsHoverInfo(null)}
-                    onClick={() => setIsSettingsOpen(true)}
+                    onMouseLeave={() => startCloseTimeout(settingsTimeoutRef, setSettingsHoverInfo)}
+                    onClick={() => {
+                        setIsSettingsOpen(true);
+                        setSettingsHoverInfo(null); // Close tooltip when opening settings
+                    }}
                 >
                     <div className="h-10 md:h-11 w-10 md:w-11 flex items-center justify-center rounded-xl bg-[#1a1a1a] border border-[#333] hover:bg-[#252525] hover:border-blue-500/50 text-gray-400 hover:text-white transition-all cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -429,7 +453,14 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                     </div>
-                    {settingsHoverInfo && <Tooltip info={settingsHoverInfo} forcePosition="bottom" />}
+                    {settingsHoverInfo && (
+                        <Tooltip
+                            info={settingsHoverInfo}
+                            forcePosition="bottom"
+                            onMouseEnter={() => clearTooltipTimeout(settingsTimeoutRef)}
+                            onMouseLeave={() => startCloseTimeout(settingsTimeoutRef, setSettingsHoverInfo)}
+                        />
+                    )}
                 </div>
 
                 <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
