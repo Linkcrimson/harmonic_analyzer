@@ -76,7 +76,7 @@ function Selector<T extends string>({ options, selectedValue, onChange, title }:
             {/* Trigger Button (Visible when closed) */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`h-10 w-10 rounded-full bg-[#161616] border border-[#333] flex items-center justify-center transition-all focus:outline-none shadow-sm relative z-10 ${isOpen ? 'opacity-0 pointer-events-none' : 'text-gray-400 hover:text-white hover:border-gray-500'
+                className={`h-10 w-10 rounded-full bg-[#161616] border border-[#333] flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] shadow-sm relative z-10 ${isOpen ? 'opacity-0 pointer-events-none' : 'text-gray-400 hover:text-white hover:border-gray-500'
                     }`}
                 title={title}
             >
@@ -186,7 +186,7 @@ export const Controls: React.FC<ControlsProps> = ({ scrollContainerRef }) => {
 
                 {/* Reset Button */}
                 <button onClick={reset}
-                    className="h-10 w-10 rounded-full bg-[#222] text-gray-400 hover:bg-[#333] border border-[#333] flex items-center justify-center shadow-sm transition active:scale-95 relative z-10"
+                    className="h-10 w-10 rounded-full bg-[#222] text-gray-400 hover:bg-[#333] border border-[#333] flex items-center justify-center shadow-sm transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] relative z-10"
                     title="Resetta">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd"

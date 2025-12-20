@@ -60,7 +60,16 @@ export const EnharmonicToggle: React.FC<EnharmonicToggleProps> = ({
 
     return (
         <div
-            className="flex items-center h-10 md:h-11 bg-[#1a1a1a] p-1 border border-[#333] rounded-xl shadow-inner relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50 tooltip-trigger"
+            className="flex items-center h-10 md:h-11 bg-[#1a1a1a] p-1 border border-[#333] rounded-xl shadow-inner relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50 tooltip-trigger focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a]"
+            tabIndex={0}
+            role="button"
+            aria-label={language === 'it' ? "Cambia Ortografia Musicale" : "Change Musical Spelling"}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleEnharmonic();
+                }
+            }}
             onMouseEnter={(e) => {
                 onCancelClose();
                 const rect = e.currentTarget.getBoundingClientRect();

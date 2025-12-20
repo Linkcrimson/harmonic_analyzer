@@ -231,7 +231,14 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
             />
 
             {/* Tooltip */}
-            {hoveredInfo && <Tooltip info={hoveredInfo} variant="modal" />}
+            {hoveredInfo && (
+                <Tooltip
+                    info={hoveredInfo}
+                    variant="modal"
+                    onMouseEnter={clearCloseTimeout}
+                    onMouseLeave={handleMouseLeave}
+                />
+            )}
         </div>
     );
 };
