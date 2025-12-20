@@ -125,17 +125,14 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
     };
 
     const handleMouseEnter = (title: string, content: React.ReactNode, e: React.MouseEvent) => {
-        const svgRect = e.currentTarget.closest('svg')?.getBoundingClientRect();
-        if (svgRect) {
-            setHoveredInfo({
-                title,
-                content,
-                x: e.clientX - svgRect.left,
-                y: e.clientY - svgRect.top,
-                containerWidth: svgRect.width,
-                clientY: e.clientY
-            });
-        }
+        setHoveredInfo({
+            title,
+            content,
+            x: e.clientX,
+            y: e.clientY,
+            containerWidth: window.innerWidth,
+            clientY: e.clientY
+        });
     };
 
     const handleMouseLeave = () => {
@@ -144,16 +141,13 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
 
     const handleMouseMove = (e: React.MouseEvent) => {
         if (hoveredInfo) {
-            const svgRect = e.currentTarget.closest('svg')?.getBoundingClientRect();
-            if (svgRect) {
-                setHoveredInfo(prev => prev ? ({
-                    ...prev,
-                    x: e.clientX - svgRect.left,
-                    y: e.clientY - svgRect.top,
-                    containerWidth: svgRect.width,
-                    clientY: e.clientY
-                }) : null);
-            }
+            setHoveredInfo(prev => prev ? ({
+                ...prev,
+                x: e.clientX,
+                y: e.clientY,
+                containerWidth: window.innerWidth,
+                clientY: e.clientY
+            }) : null);
         }
     };
 
