@@ -28,18 +28,10 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
     );
 
     return (
-        <div
-            className="relative tooltip-trigger outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] rounded-xl"
-            tabIndex={0}
-            role="button"
+        <button
+            type="button"
+            className="relative tooltip-trigger outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] rounded-xl h-10 md:h-11 w-10 md:w-11 flex items-center justify-center bg-[#1a1a1a] border border-[#333] hover:bg-[#252525] hover:border-blue-500/50 text-gray-400 hover:text-white transition-all cursor-pointer"
             aria-label={language === 'it' ? "Apri Impostazioni" : "Open Settings"}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setIsSettingsOpen(true);
-                    onCloseTooltip();
-                }
-            }}
             onMouseEnter={(e) => {
                 onCancelClose();
                 const rect = e.currentTarget.getBoundingClientRect();
@@ -70,12 +62,10 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
                 });
             }}
         >
-            <div className="h-10 md:h-11 w-10 md:w-11 flex items-center justify-center rounded-xl bg-[#1a1a1a] border border-[#333] hover:bg-[#252525] hover:border-blue-500/50 text-gray-400 hover:text-white transition-all cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
             {activeTooltip?.type === 'settings' && (
                 <Tooltip
                     info={{ ...activeTooltip.info, content: getContent() }}
@@ -84,6 +74,6 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
                     onMouseLeave={onScheduleClose}
                 />
             )}
-        </div>
+        </button>
     );
 };
