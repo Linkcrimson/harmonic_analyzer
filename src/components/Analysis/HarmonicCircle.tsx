@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useHarmonic } from '../../context/HarmonicContext';
 import { ChordSymbol } from './ChordSymbol';
 import { getDidacticExplanation } from '../../utils/didacticTooltips';
+import { getIntervalColor } from '../../utils/intervalColors';
 import { useLanguage } from '../../context/LanguageContext';
 import { Tooltip, TooltipInfo } from '../Tooltip';
 
@@ -19,16 +20,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
     const radius = size * 0.39; // Maximized to fit labels tightly
 
     // Helper to get color based on interval type
-    const getColor = (type: string | undefined) => {
-        switch (type) {
-            case 'root': return 'var(--col-root)';
-            case 'third': return 'var(--col-third)';
-            case 'fifth': return 'var(--col-fifth)';
-            case 'seventh': return 'var(--col-seventh)';
-            case 'ext': return 'var(--col-ext)';
-            default: return '#333'; // Inactive/Empty
-        }
-    };
+    const getColor = (type: string | undefined) => getIntervalColor(type);
 
     // Helper to calculate point on circle
     const getPoint = (index: number, r: number = radius) => {
