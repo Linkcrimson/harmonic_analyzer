@@ -139,6 +139,17 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
         setHoveredInfo(null);
     };
 
+    // Global tap-to-close for mobile
+    React.useEffect(() => {
+        const closeAll = () => setHoveredInfo(null);
+        window.addEventListener('touchstart', (e) => {
+            if (!(e.target as HTMLElement).closest('.tooltip-trigger') && !(e.target as HTMLElement).closest('.tooltip-box')) {
+                closeAll();
+            }
+        });
+        return () => window.removeEventListener('touchstart', () => { });
+    }, []);
+
     const handleMouseMove = (e: React.MouseEvent) => {
         if (hoveredInfo) {
             setHoveredInfo(prev => prev ? ({
@@ -201,6 +212,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                                         onMouseMove={handleMouseMove}
                                         onMouseLeave={handleMouseLeave}
                                         style={{ cursor: 'help' }}
+                                        className="tooltip-trigger"
                                     />
 
                                     {/* Visible Marker */}
@@ -245,6 +257,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                                         onMouseMove={handleMouseMove}
                                         onMouseLeave={handleMouseLeave}
                                         style={{ cursor: 'help' }}
+                                        className="tooltip-trigger"
                                     />
                                     <circle
                                         cx={pos.x}
@@ -273,6 +286,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                                     onMouseMove={handleMouseMove}
                                     onMouseLeave={handleMouseLeave}
                                     style={{ cursor: 'help' }}
+                                    className="tooltip-trigger"
                                 />
                                 <path
                                     d={d}
@@ -319,6 +333,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                                     onMouseMove={handleMouseMove}
                                     onMouseLeave={handleMouseLeave}
                                     style={{ cursor: 'help' }}
+                                    className="tooltip-trigger"
                                 />
                                 <circle
                                     cx={pos.x}

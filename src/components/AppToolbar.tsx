@@ -18,52 +18,57 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
     isSettingsOpen,
     setIsSettingsOpen
 }) => {
-    const [enharmonicHoverInfo, setEnharmonicHoverInfo] = useState<TooltipInfo | null>(null);
-    const [bassHoverInfo, setBassHoverInfo] = useState<TooltipInfo | null>(null);
-    const [viewModeHoverInfo, setViewModeHoverInfo] = useState<TooltipInfo | null>(null);
-    const [settingsHoverInfo, setSettingsHoverInfo] = useState<TooltipInfo | null>(null);
+    const [activeTooltip, setActiveTooltip] = useState<{
+        type: 'enharmonic' | 'bass' | 'view' | 'settings',
+        info: TooltipInfo
+    } | null>(null);
 
     const { activeNotes, analysis, forceBassAsRoot, toggleBassAsRoot, checkEnharmonic, toggleEnharmonic } = useHarmonic();
     const { language } = useLanguage();
 
-    // Timeout refs to manage delay closing
-    const enharmonicTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-    const bassTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-    const viewModeTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-    const settingsTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const closeTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isTouchRef = React.useRef(false);
+
+    // Initial touch detection
+    React.useEffect(() => {
+        const handleTouch = () => { isTouchRef.current = true; };
+        window.addEventListener('touchstart', handleTouch, { once: true });
+        return () => window.removeEventListener('touchstart', handleTouch);
+    }, []);
 
     // Click outside handler to close all tooltips on mobile interactions
     React.useEffect(() => {
+        const closeAll = () => setActiveTooltip(null);
+        window.addEventListener('scroll', closeAll, { capture: true });
+        // Also close on background click for mobile responsiveness
+        window.addEventListener('touchstart', (e) => {
+            // If the tap is NOT on a tooltip or a trigger, close it
+            if (!(e.target as HTMLElement).closest('.tooltip-trigger') && !(e.target as HTMLElement).closest('.tooltip-box')) {
+                closeAll();
+            }
+        });
 
-
-        window.addEventListener('scroll', () => {
-            // Close tooltips on scroll to prevent stuck floating
-            setEnharmonicHoverInfo(null);
-            setBassHoverInfo(null);
-            setViewModeHoverInfo(null);
-            setSettingsHoverInfo(null);
-        }, { capture: true });
-
-        return () => window.removeEventListener('scroll', () => { });
+        return () => {
+            window.removeEventListener('scroll', closeAll);
+            window.removeEventListener('touchstart', () => { });
+        };
     }, []);
 
-    // Helper to clear timeout
-    const clearTooltipTimeout = (ref: React.MutableRefObject<ReturnType<typeof setTimeout> | null>) => {
-        if (ref.current) {
-            clearTimeout(ref.current);
-            ref.current = null;
+    const clearCloseTimeout = () => {
+        if (closeTimeoutRef.current) {
+            clearTimeout(closeTimeoutRef.current);
+            closeTimeoutRef.current = null;
         }
     };
 
-    // Helper to start close timeout
-    const startCloseTimeout = (
-        ref: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
-        setter: React.Dispatch<React.SetStateAction<TooltipInfo | null>>
-    ) => {
-        if (ref.current) clearTimeout(ref.current);
-        ref.current = setTimeout(() => {
-            setter(null);
-        }, 300); // 300ms delay to allow moving to tooltip
+    const startCloseTimeout = () => {
+        clearCloseTimeout();
+        // On touch devices, we close faster/immediately if they tap away
+        // On desktop, we keep the 300ms delay
+        const delay = isTouchRef.current ? 50 : 300;
+        closeTimeoutRef.current = setTimeout(() => {
+            setActiveTooltip(null);
+        }, delay);
     };
 
 
@@ -264,24 +269,26 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
             <div className="flex items-center gap-3">
                 {/* Enharmonic Toggle */}
                 <div
-                    className="flex items-center h-10 md:h-11 bg-[#1a1a1a] p-1 border border-[#333] rounded-xl shadow-inner relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50"
+                    className="flex items-center h-10 md:h-11 bg-[#1a1a1a] p-1 border border-[#333] rounded-xl shadow-inner relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50 tooltip-trigger"
                     onMouseEnter={(e) => {
-                        clearTooltipTimeout(enharmonicTimeoutRef);
+                        clearCloseTimeout();
                         const rect = e.currentTarget.getBoundingClientRect();
-                        setEnharmonicHoverInfo({
-                            title: language === 'it' ? "ORTOGRAFIA MUSICALE" : "MUSICAL SPELLING",
-                            content: null, // Content generated in render
-                            x: rect.left + (rect.width / 2),
-                            y: rect.bottom,
-                            containerWidth: rect.width,
-                            clientY: e.clientY
+                        setActiveTooltip({
+                            type: 'enharmonic',
+                            info: {
+                                title: language === 'it' ? "ORTOGRAFIA MUSICALE" : "MUSICAL SPELLING",
+                                content: null,
+                                x: rect.left + (rect.width / 2),
+                                y: rect.bottom,
+                                containerWidth: rect.width,
+                                clientY: e.clientY
+                            }
                         });
                     }}
-                    onMouseLeave={() => startCloseTimeout(enharmonicTimeoutRef, setEnharmonicHoverInfo)}
+                    onMouseLeave={startCloseTimeout}
                     onClick={() => {
-                        // Toggle logic for the main button
                         toggleEnharmonic();
-                        clearTooltipTimeout(enharmonicTimeoutRef);
+                        clearCloseTimeout();
                     }}
                 >
                     {/* Animated Spelling Label - To the LEFT */}
@@ -302,35 +309,38 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                         </div>
                     </div>
 
-                    {enharmonicHoverInfo && (
+                    {activeTooltip?.type === 'enharmonic' && (
                         <Tooltip
-                            info={{ ...enharmonicHoverInfo, content: getEnharmonicContent() }}
+                            info={{ ...activeTooltip.info, content: getEnharmonicContent() }}
                             forcePosition="bottom"
-                            onMouseEnter={() => clearTooltipTimeout(enharmonicTimeoutRef)}
-                            onMouseLeave={() => startCloseTimeout(enharmonicTimeoutRef, setEnharmonicHoverInfo)}
+                            onMouseEnter={clearCloseTimeout}
+                            onMouseLeave={startCloseTimeout}
                         />
                     )}
                 </div>
 
                 {/* Bass as Root Toggle */}
                 <div
-                    className={`flex items-center h-10 md:h-11 p-1 bg-[#1a1a1a] border border-[#333] rounded-xl relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50 ${forceBassAsRoot ? 'shadow-[0_0_15px_rgba(59,130,246,0.2)]' : ''}`}
+                    className={`flex items-center h-10 md:h-11 p-1 bg-[#1a1a1a] border border-[#333] rounded-xl relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50 tooltip-trigger ${forceBassAsRoot ? 'shadow-[0_0_15px_rgba(59,130,246,0.2)]' : ''}`}
                     onMouseEnter={(e) => {
-                        clearTooltipTimeout(bassTimeoutRef);
+                        clearCloseTimeout();
                         const rect = e.currentTarget.getBoundingClientRect();
-                        setBassHoverInfo({
-                            title: language === 'it' ? "RIFERIMENTO FONDAMENTALE" : "ROOT REFERENCE",
-                            content: null, // Content generated in render
-                            x: rect.left + (rect.width / 2),
-                            y: rect.bottom,
-                            containerWidth: rect.width,
-                            clientY: e.clientY
+                        setActiveTooltip({
+                            type: 'bass',
+                            info: {
+                                title: language === 'it' ? "RIFERIMENTO FONDAMENTALE" : "ROOT REFERENCE",
+                                content: null,
+                                x: rect.left + (rect.width / 2),
+                                y: rect.bottom,
+                                containerWidth: rect.width,
+                                clientY: e.clientY
+                            }
                         });
                     }}
-                    onMouseLeave={() => startCloseTimeout(bassTimeoutRef, setBassHoverInfo)}
+                    onMouseLeave={startCloseTimeout}
                     onClick={() => {
                         toggleBassAsRoot();
-                        clearTooltipTimeout(bassTimeoutRef);
+                        clearCloseTimeout();
                     }}
                 >
                     {/* Animated Root Label - To the LEFT */}
@@ -368,36 +378,39 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                         </svg>
                     </div>
 
-                    {bassHoverInfo && (
+                    {activeTooltip?.type === 'bass' && (
                         <Tooltip
-                            info={{ ...bassHoverInfo, content: getBassContent() }}
+                            info={{ ...activeTooltip.info, content: getBassContent() }}
                             forcePosition="bottom"
-                            onMouseEnter={() => clearTooltipTimeout(bassTimeoutRef)}
-                            onMouseLeave={() => startCloseTimeout(bassTimeoutRef, setBassHoverInfo)}
+                            onMouseEnter={clearCloseTimeout}
+                            onMouseLeave={startCloseTimeout}
                         />
                     )}
                 </div>
 
                 {/* View Mode Toggle */}
                 <div
-                    className="flex items-center h-10 md:h-11 bg-[#1a1a1a] p-1 border border-[#333] rounded-xl shadow-inner relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50"
+                    className="flex items-center h-10 md:h-11 bg-[#1a1a1a] p-1 border border-[#333] rounded-xl shadow-inner relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50 tooltip-trigger"
                     onMouseEnter={(e) => {
-                        clearTooltipTimeout(viewModeTimeoutRef);
+                        clearCloseTimeout();
                         const rect = e.currentTarget.getBoundingClientRect();
-                        setViewModeHoverInfo({
-                            title: language === 'it' ? "MODALITÀ VISTA" : "VIEW MODE",
-                            content: null, // Content generated in render
-                            x: rect.left + (rect.width / 2),
-                            y: rect.bottom,
-                            containerWidth: rect.width,
-                            clientY: e.clientY
+                        setActiveTooltip({
+                            type: 'view',
+                            info: {
+                                title: language === 'it' ? "MODALITÀ VISTA" : "VIEW MODE",
+                                content: null,
+                                x: rect.left + (rect.width / 2),
+                                y: rect.bottom,
+                                containerWidth: rect.width,
+                                clientY: e.clientY
+                            }
                         });
                     }}
-                    onMouseLeave={() => startCloseTimeout(viewModeTimeoutRef, setViewModeHoverInfo)}
+                    onMouseLeave={startCloseTimeout}
                     onClick={() => {
                         const nextMode = viewMode === 'circle' ? 'cards' : 'circle';
                         setViewMode(nextMode);
-                        clearTooltipTimeout(viewModeTimeoutRef);
+                        clearCloseTimeout();
                     }}
                 >
                     <div className="h-full flex items-center px-3 rounded-lg transition-colors">
@@ -417,35 +430,38 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                             </svg>
                         )}
                     </div>
-                    {viewModeHoverInfo && (
+                    {activeTooltip?.type === 'view' && (
                         <Tooltip
-                            info={{ ...viewModeHoverInfo, content: getViewModeContent() }}
+                            info={{ ...activeTooltip.info, content: getViewModeContent() }}
                             forcePosition="bottom"
-                            onMouseEnter={() => clearTooltipTimeout(viewModeTimeoutRef)}
-                            onMouseLeave={() => startCloseTimeout(viewModeTimeoutRef, setViewModeHoverInfo)}
+                            onMouseEnter={clearCloseTimeout}
+                            onMouseLeave={startCloseTimeout}
                         />
                     )}
                 </div>
 
                 {/* Settings Toggle */}
                 <div
-                    className="relative"
+                    className="relative tooltip-trigger"
                     onMouseEnter={(e) => {
-                        clearTooltipTimeout(settingsTimeoutRef);
+                        clearCloseTimeout();
                         const rect = e.currentTarget.getBoundingClientRect();
-                        setSettingsHoverInfo({
-                            title: language === 'it' ? "IMPOSTAZIONI" : "SETTINGS",
-                            content: null, // Content generated in render
-                            x: rect.left + (rect.width / 2),
-                            y: rect.bottom,
-                            containerWidth: rect.width,
-                            clientY: e.clientY
+                        setActiveTooltip({
+                            type: 'settings',
+                            info: {
+                                title: language === 'it' ? "IMPOSTAZIONI" : "SETTINGS",
+                                content: null,
+                                x: rect.left + (rect.width / 2),
+                                y: rect.bottom,
+                                containerWidth: rect.width,
+                                clientY: e.clientY
+                            }
                         });
                     }}
-                    onMouseLeave={() => startCloseTimeout(settingsTimeoutRef, setSettingsHoverInfo)}
+                    onMouseLeave={startCloseTimeout}
                     onClick={() => {
                         setIsSettingsOpen(true);
-                        setSettingsHoverInfo(null); // Close tooltip when opening settings
+                        setActiveTooltip(null);
                     }}
                 >
                     <div className="h-10 md:h-11 w-10 md:w-11 flex items-center justify-center rounded-xl bg-[#1a1a1a] border border-[#333] hover:bg-[#252525] hover:border-blue-500/50 text-gray-400 hover:text-white transition-all cursor-pointer">
@@ -454,12 +470,12 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                     </div>
-                    {settingsHoverInfo && (
+                    {activeTooltip?.type === 'settings' && (
                         <Tooltip
-                            info={{ ...settingsHoverInfo, content: getSettingsContent() }}
+                            info={{ ...activeTooltip.info, content: getSettingsContent() }}
                             forcePosition="bottom"
-                            onMouseEnter={() => clearTooltipTimeout(settingsTimeoutRef)}
-                            onMouseLeave={() => startCloseTimeout(settingsTimeoutRef, setSettingsHoverInfo)}
+                            onMouseEnter={clearCloseTimeout}
+                            onMouseLeave={startCloseTimeout}
                         />
                     )}
                 </div>
