@@ -37,5 +37,10 @@ export default defineConfig({
     base: './', // Ensure relative paths for GitHub Pages
     build: {
         outDir: 'docs' // Build to docs folder for GitHub Pages
-    }
+    },
+    test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: './src/setupTests.ts',
+    },
 })

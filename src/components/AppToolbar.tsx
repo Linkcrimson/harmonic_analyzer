@@ -101,7 +101,6 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                 <BassToggle
                     activeTooltip={activeTooltip}
                     onOpenTooltip={handleOpenTooltip}
-                    onCloseTooltip={handleCloseTooltip}
                     onCancelClose={clearCloseTimeout}
                     onScheduleClose={startCloseTimeout}
                 />
@@ -111,7 +110,6 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                     setViewMode={setViewMode}
                     activeTooltip={activeTooltip}
                     onOpenTooltip={handleOpenTooltip}
-                    onCloseTooltip={handleCloseTooltip}
                     onCancelClose={clearCloseTimeout}
                     onScheduleClose={startCloseTimeout}
                 />
