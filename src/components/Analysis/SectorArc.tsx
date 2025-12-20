@@ -14,6 +14,7 @@ interface SectorArcProps {
     onMouseEnter: (title: string, content: React.ReactNode, e: React.MouseEvent) => void;
     onMouseMove: (e: React.MouseEvent) => void;
     onMouseLeave: () => void;
+    onClick: (title: string, content: React.ReactNode, e: React.MouseEvent) => void;
 }
 
 // Helper to draw arc path
@@ -39,7 +40,8 @@ export const SectorArc: React.FC<SectorArcProps> = ({
     radius,
     onMouseEnter,
     onMouseMove,
-    onMouseLeave
+    onMouseLeave,
+    onClick
 }) => {
     // Special case: Root is a single point, not an arc
     if (sector.type === 'root') {
@@ -55,6 +57,7 @@ export const SectorArc: React.FC<SectorArcProps> = ({
                     onMouseEnter={(e) => onMouseEnter(sector.title, sector.description, e)}
                     onMouseMove={onMouseMove}
                     onMouseLeave={onMouseLeave}
+                    onClick={(e) => onClick(sector.title, sector.description, e)}
                     style={{ cursor: 'help' }}
                     className="tooltip-trigger"
                 />
@@ -87,6 +90,7 @@ export const SectorArc: React.FC<SectorArcProps> = ({
                 onMouseEnter={(e) => onMouseEnter(sector.title, sector.description, e)}
                 onMouseMove={onMouseMove}
                 onMouseLeave={onMouseLeave}
+                onClick={(e) => onClick(sector.title, sector.description, e)}
                 style={{ cursor: 'help' }}
                 className="tooltip-trigger"
             />

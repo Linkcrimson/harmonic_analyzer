@@ -15,6 +15,7 @@ interface ExtensionMarkerProps {
     onMouseEnter: (title: string, content: React.ReactNode, e: React.MouseEvent) => void;
     onMouseMove: (e: React.MouseEvent) => void;
     onMouseLeave: () => void;
+    onClick: (title: string, content: React.ReactNode, e: React.MouseEvent) => void;
 }
 
 export const ExtensionMarker: React.FC<ExtensionMarkerProps> = ({
@@ -25,7 +26,8 @@ export const ExtensionMarker: React.FC<ExtensionMarkerProps> = ({
     contextIntervals,
     onMouseEnter,
     onMouseMove,
-    onMouseLeave
+    onMouseLeave,
+    onClick
 }) => {
     const { language, t } = useLanguage();
     const didactic = getDidacticExplanation(idx, contextIntervals, language);
@@ -55,6 +57,7 @@ export const ExtensionMarker: React.FC<ExtensionMarkerProps> = ({
                 onMouseEnter={(e) => onMouseEnter(didactic.title, content, e)}
                 onMouseMove={onMouseMove}
                 onMouseLeave={onMouseLeave}
+                onClick={(e) => onClick(didactic.title, content, e)}
                 style={{ cursor: 'help' }}
                 className="tooltip-trigger"
             />
