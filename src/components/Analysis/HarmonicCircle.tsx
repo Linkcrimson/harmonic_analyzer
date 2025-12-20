@@ -63,8 +63,19 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
 
     // Tooltip state
     const [hoveredInfo, setHoveredInfo] = useState<TooltipInfo | null>(null);
+    const [isTooltipLocked, setIsTooltipLocked] = useState(false);
+    const closeTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const clearCloseTimeout = () => {
+        if (closeTimeoutRef.current) {
+            clearTimeout(closeTimeoutRef.current);
+            closeTimeoutRef.current = null;
+        }
+    };
 
     const handleMouseEnter = (title: string, content: React.ReactNode, e: React.MouseEvent) => {
+        if (isTooltipLocked) return;
+        clearCloseTimeout();
         setHoveredInfo({
             title,
             content,
@@ -75,10 +86,17 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
         });
     };
 
-    const handleMouseLeave = () => setHoveredInfo(null);
+    const handleMouseLeave = () => {
+        if (isTooltipLocked) return;
+        clearCloseTimeout();
+        closeTimeoutRef.current = setTimeout(() => {
+            setHoveredInfo(null);
+        }, 100);
+    };
 
     const handleMouseMove = (e: React.MouseEvent) => {
-        if (hoveredInfo) {
+        // Modal version doesn't need continuous coordinate updates
+        if (hoveredInfo && !isTooltipLocked) {
             setHoveredInfo(prev => prev ? ({
                 ...prev,
                 x: e.clientX,
@@ -89,17 +107,37 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
         }
     };
 
-    // Global tap-to-close for mobile
+    const handleTriggerClick = (title: string, content: React.ReactNode, e: React.MouseEvent) => {
+        clearCloseTimeout();
+        setHoveredInfo({
+            title,
+            content,
+            x: e.clientX,
+            y: e.clientY,
+            containerWidth: window.innerWidth,
+            clientY: e.clientY
+        });
+        setIsTooltipLocked(true);
+    };
+
+    // Global tap-to-close for mobile & desktop
     React.useEffect(() => {
-        const closeAll = () => setHoveredInfo(null);
-        const handler = (e: TouchEvent) => {
+        const closeAll = () => {
+            setHoveredInfo(null);
+            setIsTooltipLocked(false);
+        };
+        const handler = (e: MouseEvent | TouchEvent) => {
             if (!(e.target as HTMLElement).closest('.tooltip-trigger') &&
                 !(e.target as HTMLElement).closest('.tooltip-box')) {
                 closeAll();
             }
         };
         window.addEventListener('touchstart', handler);
-        return () => window.removeEventListener('touchstart', handler);
+        window.addEventListener('mousedown', handler);
+        return () => {
+            window.removeEventListener('touchstart', handler);
+            window.removeEventListener('mousedown', handler);
+        };
     }, []);
 
     // Sector definitions
@@ -142,6 +180,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                                 onMouseEnter={handleMouseEnter}
                                 onMouseMove={handleMouseMove}
                                 onMouseLeave={handleMouseLeave}
+                                onClick={handleTriggerClick}
                             />
                         ));
                     } else {
@@ -155,6 +194,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                                 onMouseEnter={handleMouseEnter}
                                 onMouseMove={handleMouseMove}
                                 onMouseLeave={handleMouseLeave}
+                                onClick={handleTriggerClick}
                             />
                         );
                     }
@@ -175,6 +215,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                                 onMouseEnter={handleMouseEnter}
                                 onMouseMove={handleMouseMove}
                                 onMouseLeave={handleMouseLeave}
+                                onClick={handleTriggerClick}
                             />
                         );
                     }
@@ -190,7 +231,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
             />
 
             {/* Tooltip */}
-            {hoveredInfo && <Tooltip info={hoveredInfo} />}
+            {hoveredInfo && <Tooltip info={hoveredInfo} variant="modal" />}
         </div>
     );
 };

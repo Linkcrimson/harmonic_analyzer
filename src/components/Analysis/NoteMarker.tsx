@@ -16,6 +16,7 @@ interface NoteMarkerProps {
     onMouseEnter: (title: string, content: React.ReactNode, e: React.MouseEvent) => void;
     onMouseMove: (e: React.MouseEvent) => void;
     onMouseLeave: () => void;
+    onClick: (title: string, content: React.ReactNode, e: React.MouseEvent) => void;
 }
 
 export const NoteMarker: React.FC<NoteMarkerProps> = ({
@@ -25,7 +26,8 @@ export const NoteMarker: React.FC<NoteMarkerProps> = ({
     contextIntervals,
     onMouseEnter,
     onMouseMove,
-    onMouseLeave
+    onMouseLeave,
+    onClick
 }) => {
     const { language, t } = useLanguage();
     const didactic = getDidacticExplanation(note.idx, contextIntervals, language);
@@ -55,6 +57,7 @@ export const NoteMarker: React.FC<NoteMarkerProps> = ({
                 onMouseEnter={(e) => onMouseEnter(didactic.title, content, e)}
                 onMouseMove={onMouseMove}
                 onMouseLeave={onMouseLeave}
+                onClick={(e) => onClick(didactic.title, content, e)}
                 style={{ cursor: 'help' }}
                 className="tooltip-trigger"
             />
