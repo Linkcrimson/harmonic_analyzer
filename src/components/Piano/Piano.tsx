@@ -51,13 +51,14 @@ interface WhiteKeyProps {
     isActive: boolean;
     intervalType?: string;
     label: string;
+    ariaLabel?: string;
     onInteractionStart: (e: React.SyntheticEvent, noteId: number) => void;
     onInteractionEnd: (e: React.SyntheticEvent, noteId: number) => void;
     inputMode: InputMode;
     isLocked: boolean;
 }
 
-const WhiteKey: React.FC<WhiteKeyProps> = memo(({ id, isActive, intervalType, label, onInteractionStart, onInteractionEnd, inputMode, isLocked }) => {
+const WhiteKey: React.FC<WhiteKeyProps> = memo(({ id, isActive, intervalType, label, ariaLabel, onInteractionStart, onInteractionEnd, inputMode, isLocked }) => {
     const lastTouchTime = useRef(0);
     const startPos = useRef<{ x: number, y: number } | null>(null);
     const isScrolling = useRef(false);
@@ -107,7 +108,8 @@ const WhiteKey: React.FC<WhiteKeyProps> = memo(({ id, isActive, intervalType, la
     const textColorClass = isActive ? 'text-white' : 'text-gray-500';
 
     return (
-        <div
+        <button
+            type="button"
             className={`white-key relative flex-1 h-full border border-gray-800 rounded-b cursor-pointer flex items-end justify-center pb-2 text-sm select-none transition-colors duration-100 outline-none focus:shadow-[inset_0_0_0_6px_#2563eb] focus:z-10 bg-white ${textColorClass}`}
             style={{
                 zIndex: 1,
@@ -122,16 +124,14 @@ const WhiteKey: React.FC<WhiteKeyProps> = memo(({ id, isActive, intervalType, la
             onTouchEnd={handleTouchEnd}
             onKeyDown={handleKeyDown}
             onContextMenu={(e) => e.preventDefault()}
-            role="button"
-            aria-label={`${label || 'Piano'} key`}
+            aria-label={ariaLabel || `${label || 'Piano'} key`}
             aria-pressed={isActive}
-            tabIndex={0}
         >
             {renderOverlay(isActive, isLocked, intervalType, inputMode)}
             <div className="relative z-10 flex flex-col items-center justify-end h-full pointer-events-none">
                 {label}
             </div>
-        </div>
+        </button>
     );
 });
 WhiteKey.displayName = 'WhiteKey';
@@ -142,6 +142,7 @@ interface BlackKeyProps {
     isActive: boolean;
     intervalType?: string;
     label: string;
+    ariaLabel?: string;
     leftOffset: string; // CSS left position (e.g., '12%')
     onInteractionStart: (e: React.SyntheticEvent, noteId: number) => void;
     onInteractionEnd: (e: React.SyntheticEvent, noteId: number) => void;
@@ -149,7 +150,7 @@ interface BlackKeyProps {
     isLocked: boolean;
 }
 
-const BlackKey: React.FC<BlackKeyProps> = memo(({ id, isActive, intervalType, label, leftOffset, onInteractionStart, onInteractionEnd, inputMode, isLocked }) => {
+const BlackKey: React.FC<BlackKeyProps> = memo(({ id, isActive, intervalType, label, ariaLabel, leftOffset, onInteractionStart, onInteractionEnd, inputMode, isLocked }) => {
     const lastTouchTime = useRef(0);
     const startPos = useRef<{ x: number, y: number } | null>(null);
     const isScrolling = useRef(false);
@@ -202,7 +203,8 @@ const BlackKey: React.FC<BlackKeyProps> = memo(({ id, isActive, intervalType, la
     }, [id, onInteractionEnd]);
 
     return (
-        <div
+        <button
+            type="button"
             className="black-key absolute h-2/3 rounded-b border border-black cursor-pointer flex items-end justify-center pb-2 text-[10px] select-none transition-colors duration-100 outline-none focus:shadow-[inset_0_0_0_6px_#60a5fa] focus:z-20 bg-black"
             style={{
                 left: leftOffset,
@@ -221,16 +223,14 @@ const BlackKey: React.FC<BlackKeyProps> = memo(({ id, isActive, intervalType, la
             onTouchEnd={handleTouchEnd}
             onKeyDown={handleKeyDown}
             onContextMenu={(e) => e.preventDefault()}
-            role="button"
-            aria-label={`${label || 'Sharp/Flat'} key`}
+            aria-label={ariaLabel || `${label || 'Sharp/Flat'} key`}
             aria-pressed={isActive}
-            tabIndex={0}
         >
             {renderOverlay(isActive, isLocked, intervalType, inputMode)}
             <span className="relative z-20 pointer-events-none text-[10px] mb-2 font-medium opacity-90 text-white">
                 {label}
             </span>
-        </div>
+        </button>
     );
 });
 BlackKey.displayName = 'BlackKey';
@@ -241,6 +241,7 @@ interface WhiteKeyData {
     isActive: boolean;
     intervalType?: string;
     label: string;
+    ariaLabel?: string;
     isLocked: boolean;
 }
 
@@ -249,6 +250,7 @@ interface BlackKeyData {
     isActive: boolean;
     intervalType?: string;
     label: string;
+    ariaLabel?: string;
     isLocked: boolean;
     leftOffset: string;
 }
@@ -321,6 +323,7 @@ export const Piano = React.forwardRef<HTMLDivElement>((_props, ref) => {
                     isActive: isWhiteActive,
                     intervalType: whiteInterval,
                     label: whiteLabel,
+                    ariaLabel: `${keyData.label} ${oct + 4}`,
                     isLocked: lockedNotes.has(whiteNoteId)
                 });
 
@@ -337,11 +340,23 @@ export const Piano = React.forwardRef<HTMLDivElement>((_props, ref) => {
 
                     const leftOffset = BLACK_KEY_POSITIONS.get(blackNoteId) || '0%';
 
+                    // Calculate Black Key Name (e.g., Do Diesis 4)
+                    // Note: noteIndex is the LEFT white key.
+                    // 0 (Do) -> has no left black
+                    // 2 (Re) -> Left black is Do# (C#)
+                    let blackName = '';
+                    if (keyData.noteIndex === 2) blackName = 'Do Diesis';
+                    if (keyData.noteIndex === 4) blackName = 'Re Diesis';
+                    if (keyData.noteIndex === 7) blackName = 'Fa Diesis';
+                    if (keyData.noteIndex === 9) blackName = 'Sol Diesis';
+                    if (keyData.noteIndex === 11) blackName = 'La Diesis';
+
                     blacks.push({
                         id: blackNoteId,
                         isActive: isBlackActive,
                         intervalType: blackInterval,
                         label: blackLabel,
+                        ariaLabel: `${blackName} ${oct + 4}`,
                         isLocked: lockedNotes.has(blackNoteId),
                         leftOffset
                     });
@@ -363,6 +378,7 @@ export const Piano = React.forwardRef<HTMLDivElement>((_props, ref) => {
             isActive: isFinalActive,
             intervalType: finalInterval,
             label: finalLabel,
+            ariaLabel: 'Do 6',
             isLocked: lockedNotes.has(finalC)
         });
 

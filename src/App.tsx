@@ -9,6 +9,7 @@ import { Controls } from './components/Controls';
 import { Piano } from './components/Piano/Piano';
 import { UpdateManager } from './components/UpdateManager';
 import { AppToolbar } from './components/AppToolbar';
+import { MetaManager } from './components/SEO/MetaManager';
 
 const AppContent: React.FC = () => {
     const pianoScrollRef = React.useRef<HTMLDivElement>(null);
@@ -57,6 +58,7 @@ export const App: React.FC = () => {
                 <HarmonicProvider>
                     <PWAProvider>
                         <LanguageProvider>
+                            <MetaManager />
                             <div className="min-h-screen flex flex-col items-center bg-[#0a0a0a] text-[#e0e0e0]">
                                 <UpdateManager />
                                 <AppContent />
