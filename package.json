@@ -1,26 +1,31 @@
 {
   "name": "harmonic_analyzer",
-  "version": "1.0.19",
+  "version": "1.0.21",
   "description": "",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
     "build": "npm version patch --no-git-tag-version && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "keywords": [],
   "author": "Dario Biagio Bellino",
   "license": "MIT",
   "type": "module",
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^27.0.1",
     "sharp": "^0.34.5",
     "typescript": "^5.9.3",
     "vite": "^6.4.1",
     "vite-plugin-pwa": "^1.1.0",
-    "vite-plugin-singlefile": "^2.3.0"
+    "vite-plugin-singlefile": "^2.3.0",
+    "vitest": "^4.0.16"
   },
   "dependencies": {
     "react": "^19.2.0",

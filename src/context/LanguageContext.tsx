@@ -23,7 +23,7 @@ interface LanguageContextType {
     t: (path: string) => string;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+export const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 // --- Helper Functions ---
 const getBrowserLanguage = (): LanguageCode => {

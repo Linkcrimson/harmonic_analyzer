@@ -55,7 +55,7 @@ interface HarmonicState {
     toggleEnharmonic: () => void;
 }
 
-const HarmonicContext = createContext<HarmonicState | null>(null);
+export const HarmonicContext = createContext<HarmonicState | null>(null);
 
 export const useHarmonic = () => {
     const context = useContext(HarmonicContext);
