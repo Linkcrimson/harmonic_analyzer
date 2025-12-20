@@ -61,7 +61,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ info, forcePosition, onMouseEn
 
     return ReactDOM.createPortal(
         <div
-            className="fixed z-[9999] px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-sm text-gray-200 w-[220px] text-center backdrop-blur-sm transition-all duration-75 select-none cursor-default"
+            className="fixed z-[9999] px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-sm text-gray-200 w-[220px] text-center backdrop-blur-sm transition-all duration-75 select-none cursor-default tooltip-box"
             style={{
                 left: boxLeft,
                 top: topPos,

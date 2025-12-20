@@ -438,6 +438,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [sustainPedal, setSustainPedal] = useState(false);
     const heldNotesRef = React.useRef<Set<number>>(new Set());
     const sustainPedalRef = React.useRef(false);
+    const notesPendingOffRef = React.useRef<Set<number>>(new Set());
 
     const onMidiNoteOnRef = useCallback((note: number, _velocity: number) => {
         const noteId = note - 60;
@@ -452,6 +453,9 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         if (!sustainPedalRef.current) {
             stopInput(noteId, 'midi');
+        } else {
+            // Buffer the note off if sustain is active
+            notesPendingOffRef.current.add(noteId);
         }
     }, [stopInput]);
 
@@ -462,19 +466,14 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             setSustainPedal(isDown);
 
             if (!isDown) {
-                setActiveNotes(prevActive => {
-                    const newActive = new Set(prevActive);
-                    prevActive.forEach(noteId => {
-                        if (!heldNotesRef.current.has(noteId)) {
-                            newActive.delete(noteId);
-                            stopNote(noteId);
-                        }
-                    });
-                    return newActive;
+                // Release all notes that received a physical Note Off during sustain
+                notesPendingOffRef.current.forEach(noteId => {
+                    stopInput(noteId, 'midi');
                 });
+                notesPendingOffRef.current.clear();
             }
         }
-    }, [stopNote]);
+    }, [stopInput]);
 
     const { isConnected: midiConnected, inputs: midiInputs } = useMidi(onMidiNoteOnRef, onMidiNoteOffRef, onMidiControlChangeRef);
 
