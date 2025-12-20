@@ -6,7 +6,6 @@ import { Tooltip, TooltipInfo } from '../Tooltip';
 interface EnharmonicToggleProps {
     activeTooltip: { type: string; info: TooltipInfo } | null;
     onOpenTooltip: (type: string, info: TooltipInfo) => void;
-    onCloseTooltip: () => void; // Immediate close
     onCancelClose: () => void;
     onScheduleClose: () => void;
 }
@@ -14,7 +13,6 @@ interface EnharmonicToggleProps {
 export const EnharmonicToggle: React.FC<EnharmonicToggleProps> = ({
     activeTooltip,
     onOpenTooltip,
-    onCloseTooltip,
     onCancelClose,
     onScheduleClose
 }) => {
@@ -79,8 +77,18 @@ export const EnharmonicToggle: React.FC<EnharmonicToggleProps> = ({
             onMouseLeave={onScheduleClose}
             onClick={() => {
                 toggleEnharmonic();
-                onCloseTooltip(); // or onCancelClose? Usually clicking toggles the action and we might want to close tooltip.
-                onCancelClose(); // To be safe
+            }}
+            onTouchStart={(e) => {
+                onCancelClose();
+                const rect = e.currentTarget.getBoundingClientRect();
+                onOpenTooltip('enharmonic', {
+                    title: language === 'it' ? "ORTOGRAFIA MUSICALE" : "MUSICAL SPELLING",
+                    content: null,
+                    x: rect.left + (rect.width / 2),
+                    y: rect.bottom,
+                    containerWidth: rect.width,
+                    clientY: (e as unknown as React.TouchEvent).touches[0].clientY
+                });
             }}
         >
             {/* Animated Spelling Label - To the LEFT */}
