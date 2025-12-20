@@ -58,8 +58,17 @@ export const NoteMarker: React.FC<NoteMarkerProps> = ({
                 onMouseMove={onMouseMove}
                 onMouseLeave={onMouseLeave}
                 onClick={(e) => onClick(didactic.title, content, e)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onClick(didactic.title, content, e as unknown as React.MouseEvent);
+                    }
+                }}
                 style={{ cursor: 'help' }}
-                className="tooltip-trigger"
+                className="tooltip-trigger focus:outline-none focus:stroke-white focus:stroke-[3px]"
+                tabIndex={0}
+                role="button"
+                aria-label={`${note.name} - ${didactic.title}`}
             />
 
             {/* Visible Marker */}

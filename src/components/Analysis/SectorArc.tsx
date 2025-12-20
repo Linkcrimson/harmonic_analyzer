@@ -58,8 +58,17 @@ export const SectorArc: React.FC<SectorArcProps> = ({
                     onMouseMove={onMouseMove}
                     onMouseLeave={onMouseLeave}
                     onClick={(e) => onClick(sector.title, sector.description, e)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onClick(sector.title, sector.description, e as unknown as React.MouseEvent);
+                        }
+                    }}
                     style={{ cursor: 'help' }}
-                    className="tooltip-trigger"
+                    className="tooltip-trigger focus:outline-none focus:stroke-white focus:stroke-[3px]"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={sector.title}
                 />
                 <circle
                     cx={pos.x}
@@ -91,8 +100,17 @@ export const SectorArc: React.FC<SectorArcProps> = ({
                 onMouseMove={onMouseMove}
                 onMouseLeave={onMouseLeave}
                 onClick={(e) => onClick(sector.title, sector.description, e)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onClick(sector.title, sector.description, e as unknown as React.MouseEvent);
+                    }
+                }}
                 style={{ cursor: 'help' }}
-                className="tooltip-trigger"
+                className="tooltip-trigger focus:outline-none focus:stroke-white focus:stroke-[3px]"
+                tabIndex={0}
+                role="button"
+                aria-label={sector.title}
             />
             {/* Visible arc */}
             <path

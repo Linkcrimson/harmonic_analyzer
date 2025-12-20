@@ -29,7 +29,17 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
 
     return (
         <div
-            className="relative tooltip-trigger"
+            className="relative tooltip-trigger outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] rounded-xl"
+            tabIndex={0}
+            role="button"
+            aria-label={language === 'it' ? "Apri Impostazioni" : "Open Settings"}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsSettingsOpen(true);
+                    onCloseTooltip();
+                }
+            }}
             onMouseEnter={(e) => {
                 onCancelClose();
                 const rect = e.currentTarget.getBoundingClientRect();

@@ -60,7 +60,16 @@ export const BassToggle: React.FC<BassToggleProps> = ({
 
     return (
         <div
-            className={`flex items-center h-10 md:h-11 p-1 bg-[#1a1a1a] border border-[#333] rounded-xl relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50 tooltip-trigger ${forceBassAsRoot ? 'shadow-[0_0_15px_rgba(59,130,246,0.2)]' : ''}`}
+            className={`flex items-center h-10 md:h-11 p-1 bg-[#1a1a1a] border border-[#333] rounded-xl relative group cursor-pointer transition-all duration-300 hover:border-blue-500/50 tooltip-trigger focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] ${forceBassAsRoot ? 'shadow-[0_0_15px_rgba(59,130,246,0.2)]' : ''}`}
+            tabIndex={0}
+            role="button"
+            aria-label={language === 'it' ? "Cambia Riferimento Fondamentale" : "Change Root Reference"}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleBassAsRoot();
+                }
+            }}
             onMouseEnter={(e) => {
                 onCancelClose();
                 const rect = e.currentTarget.getBoundingClientRect();
