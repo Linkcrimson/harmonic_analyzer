@@ -82,18 +82,17 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
 
 
     return (
-        <div className="w-full flex flex-col md:flex-row justify-center items-center gap-3 px-2 py-3 border-b border-[#222] bg-[#0a0a0a] relative z-[100]">
+        <header className="w-full flex flex-col md:flex-row justify-center items-center gap-3 px-2 py-3 border-b border-[#222] bg-[#0a0a0a] relative z-[100]">
             <div className="w-full md:w-auto md:absolute md:left-4 flex justify-center md:block mb-1 md:mb-0">
                 <Header />
             </div>
 
             {/* Centered Controls Group */}
-            <div className="flex items-center gap-3">
+            <nav className="flex items-center gap-3" aria-label="Main Toolbar">
 
                 <EnharmonicToggle
                     activeTooltip={activeTooltip}
                     onOpenTooltip={handleOpenTooltip}
-                    onCloseTooltip={handleCloseTooltip}
                     onCancelClose={clearCloseTimeout}
                     onScheduleClose={startCloseTimeout}
                 />
@@ -124,7 +123,7 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                 />
 
                 <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-            </div>
-        </div>
+            </nav>
+        </header>
     );
 };
