@@ -21,7 +21,18 @@ export class ErrorBoundary extends Component<Props, State> {
 
     componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error('ErrorBoundary caught an error:', error, errorInfo);
+        this.logErrorToService(error, errorInfo);
     }
+
+    logErrorToService = (error: Error, errorInfo: ErrorInfo) => {
+        // [RESILIENCE AUDIT] Placeholder for real remote logging (e.g., Sentry/Datadog)
+        // In a real production app, this would send a beacon.
+        console.log('[Remote Logging] Error captured for telemetry:', {
+            timestamp: new Date().toISOString(),
+            message: error.message,
+            stack: errorInfo.componentStack
+        });
+    };
 
     handleReload = () => {
         window.location.reload();
