@@ -78,6 +78,18 @@ export const BassToggle: React.FC<BassToggleProps> = ({
                 toggleBassAsRoot();
                 onCancelClose();
             }}
+            onTouchStart={(e) => {
+                onCancelClose();
+                const rect = e.currentTarget.getBoundingClientRect();
+                onOpenTooltip('bass', {
+                    title: language === 'it' ? "RIFERIMENTO FONDAMENTALE" : "ROOT REFERENCE",
+                    content: null,
+                    x: rect.left + (rect.width / 2),
+                    y: rect.bottom,
+                    containerWidth: rect.width,
+                    clientY: (e as unknown as React.TouchEvent).touches[0].clientY
+                });
+            }}
         >
             {/* Animated Root Label - To the LEFT */}
             <div className="overflow-hidden max-w-0 group-hover:max-w-[100px] transition-all duration-500 ease-in-out">

@@ -129,6 +129,18 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
                 setViewMode(nextMode);
                 onCancelClose();
             }}
+            onTouchStart={(e) => {
+                onCancelClose();
+                const rect = e.currentTarget.getBoundingClientRect();
+                onOpenTooltip('view', {
+                    title: language === 'it' ? "MODALITÀ VISTA" : "VIEW MODE",
+                    content: null,
+                    x: rect.left + (rect.width / 2),
+                    y: rect.bottom,
+                    containerWidth: rect.width,
+                    clientY: (e as unknown as React.TouchEvent).touches[0].clientY
+                });
+            }}
         >
             <div className="h-full flex items-center px-3 rounded-lg transition-colors">
                 {viewMode === 'circle' ? (

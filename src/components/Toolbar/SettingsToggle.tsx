@@ -47,6 +47,18 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
                 setIsSettingsOpen(true);
                 onCloseTooltip();
             }}
+            onTouchStart={(e) => {
+                onCancelClose();
+                const rect = e.currentTarget.getBoundingClientRect();
+                onOpenTooltip('settings', {
+                    title: language === 'it' ? "IMPOSTAZIONI" : "SETTINGS",
+                    content: null,
+                    x: rect.left + (rect.width / 2),
+                    y: rect.bottom,
+                    containerWidth: rect.width,
+                    clientY: (e as unknown as React.TouchEvent).touches[0].clientY
+                });
+            }}
         >
             <div className="h-10 md:h-11 w-10 md:w-11 flex items-center justify-center rounded-xl bg-[#1a1a1a] border border-[#333] hover:bg-[#252525] hover:border-blue-500/50 text-gray-400 hover:text-white transition-all cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
