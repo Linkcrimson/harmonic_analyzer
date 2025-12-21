@@ -1,0 +1,66 @@
+# Page snapshot
+
+```yaml
+- main [ref=e4]:
+  - generic [ref=e5]:
+    - generic [ref=e9]: Analizzatore Armonico
+    - navigation "Main Toolbar" [ref=e10]:
+      - button "Change Musical Spelling" [ref=e11] [cursor=pointer]:
+        - generic: Spelling
+        - generic [ref=e12]:
+          - generic [ref=e14]: ♮
+          - generic [ref=e16]: 𝄫
+      - button "Change Root Reference" [ref=e17] [cursor=pointer]:
+        - generic: Root
+        - img [ref=e19]
+      - button "Change View Mode" [ref=e22] [cursor=pointer]:
+        - img [ref=e24]
+      - button "Open Settings" [ref=e29] [cursor=pointer]:
+        - img [ref=e30]
+  - generic [ref=e33]:
+    - img [ref=e39]:
+      - button "Root" [ref=e42]
+      - button "Modal Area (3rd/Sus)" [ref=e44]
+      - button "Stability Area (5th)" [ref=e46]
+      - button "Functional Area (7th)" [ref=e48]
+    - generic [ref=e51]:
+      - generic [ref=e53]:
+        - generic:
+          - generic: TASTIERA INTERATTIVA
+        - generic [ref=e54]:
+          - button "Forma d'Onda" [ref=e56]:
+            - img [ref=e57]
+          - button "Modalità Audio" [ref=e60]:
+            - img [ref=e61]
+          - button "Resetta" [ref=e63]:
+            - img [ref=e64]
+      - group "Piano keyboard" [ref=e70]:
+        - button "Do 4" [ref=e71] [cursor=pointer]:
+          - generic: C4
+        - button "Do Diesis 4" [ref=e72] [cursor=pointer]
+        - button "Re 4" [ref=e73] [cursor=pointer]
+        - button "Re Diesis 4" [ref=e74] [cursor=pointer]
+        - button "Mi 4" [ref=e75] [cursor=pointer]
+        - button "Fa 4" [ref=e76] [cursor=pointer]
+        - button "Fa Diesis 4" [ref=e77] [cursor=pointer]
+        - button "Sol 4" [ref=e78] [cursor=pointer]
+        - button "Sol Diesis 4" [ref=e79] [cursor=pointer]
+        - button "La 4" [ref=e80] [cursor=pointer]
+        - button "La Diesis 4" [ref=e81] [cursor=pointer]
+        - button "Si 4" [ref=e82] [cursor=pointer]
+        - button "Do 5" [ref=e83] [cursor=pointer]:
+          - generic: C5
+        - button "Do Diesis 5" [ref=e84] [cursor=pointer]
+        - button "Re 5" [ref=e85] [cursor=pointer]
+        - button "Re Diesis 5" [ref=e86] [cursor=pointer]
+        - button "Mi 5" [ref=e87] [cursor=pointer]
+        - button "Fa 5" [ref=e88] [cursor=pointer]
+        - button "Fa Diesis 5" [ref=e89] [cursor=pointer]
+        - button "Sol 5" [ref=e90] [cursor=pointer]
+        - button "Sol Diesis 5" [ref=e91] [cursor=pointer]
+        - button "La 5" [ref=e92] [cursor=pointer]
+        - button "La Diesis 5" [ref=e93] [cursor=pointer]
+        - button "Si 5" [ref=e94] [cursor=pointer]
+        - button "Do 6" [ref=e95] [cursor=pointer]:
+          - generic: C6
+```

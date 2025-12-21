@@ -30,8 +30,18 @@ export interface AnalysisResponse {
     };
 }
 
+// [PERFORMANCE FIX] Simple memoization cache
+const analysisCache = new Map<string, any>();
+
 self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
     const { activeNotes, selectedIndex, bassAsRoot, useEnharmonic } = e.data;
+    const cacheKey = `${activeNotes.join(',')}|${selectedIndex}|${bassAsRoot}|${useEnharmonic}`;
+
+    if (analysisCache.has(cacheKey)) {
+        self.postMessage(analysisCache.get(cacheKey));
+        return;
+    }
+
     const notes = new Set(activeNotes);
 
     if (notes.size === 0) {
@@ -128,7 +138,7 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
 
         const intervalValues = Array.from(newIntervals.values());
 
-        self.postMessage({
+        const response = {
             chordOptions: options,
             analysis: {
                 rootName: components.rootName,
@@ -145,12 +155,14 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
                     isSeventhActive: intervalValues.includes('seventh')
                 }
             }
-        });
+        };
+        analysisCache.set(cacheKey, response);
+        self.postMessage(response);
     } else {
         const fallbackIntervals = new Map<number, string>();
         sortedNotes.forEach(n => fallbackIntervals.set(n, 'active'));
 
-        self.postMessage({
+        const response = {
             chordOptions: options,
             analysis: {
                 rootName: '--',
@@ -167,6 +179,8 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
                     isSeventhActive: false
                 }
             }
-        });
+        };
+        analysisCache.set(cacheKey, response);
+        self.postMessage(response);
     }
 };
