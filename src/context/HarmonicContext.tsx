@@ -116,6 +116,23 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
     }, []);
 
+    // [AUDIO LATENCY FIX] Global warm-up listener
+    // Browsers suspend AudioContext until user interaction. 
+    // By initializing on any click/touch, we prevent the delay when the first note is played.
+    useEffect(() => {
+        const warmUp = () => {
+            initAudio();
+            window.removeEventListener('click', warmUp);
+            window.removeEventListener('touchstart', warmUp);
+        };
+        window.addEventListener('click', warmUp);
+        window.addEventListener('touchstart', warmUp);
+        return () => {
+            window.removeEventListener('click', warmUp);
+            window.removeEventListener('touchstart', warmUp);
+        };
+    }, [initAudio]);
+
     const analyze = useCallback((notes: Set<number>, selectedIndex: number = 0, bassAsRoot: boolean = false, useEnharmonic: boolean = true) => {
         if (!workerRef.current) return;
 
