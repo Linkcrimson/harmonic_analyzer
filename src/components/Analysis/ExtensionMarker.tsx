@@ -61,6 +61,7 @@ export const ExtensionMarker: React.FC<ExtensionMarkerProps> = ({
                     e.stopPropagation();
                     onClick(didactic.title, content, e);
                 }}
+                onMouseDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
