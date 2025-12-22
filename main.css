@@ -280,4 +280,9 @@ body {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     user-select: none;
+    outline: none !important;
+}
+
+.tooltip-trigger:focus:not(:focus-visible) {
+    stroke: none !important;
 }
