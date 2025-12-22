@@ -57,7 +57,11 @@ export const SectorArc: React.FC<SectorArcProps> = ({
                     onMouseEnter={(e) => onMouseEnter(sector.title, sector.description, e)}
                     onMouseMove={onMouseMove}
                     onMouseLeave={onMouseLeave}
-                    onClick={(e) => onClick(sector.title, sector.description, e)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onClick(sector.title, sector.description, e);
+                    }}
+                    onTouchStart={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
@@ -99,7 +103,11 @@ export const SectorArc: React.FC<SectorArcProps> = ({
                 onMouseEnter={(e) => onMouseEnter(sector.title, sector.description, e)}
                 onMouseMove={onMouseMove}
                 onMouseLeave={onMouseLeave}
-                onClick={(e) => onClick(sector.title, sector.description, e)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onClick(sector.title, sector.description, e);
+                }}
+                onTouchStart={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();

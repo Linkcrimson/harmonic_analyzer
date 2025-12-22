@@ -132,6 +132,7 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                 closeAll();
             }
         };
+
         window.addEventListener('touchstart', handler);
         window.addEventListener('mousedown', handler);
         return () => {
