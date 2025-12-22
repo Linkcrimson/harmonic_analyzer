@@ -110,7 +110,7 @@ const WhiteKey: React.FC<WhiteKeyProps> = memo(({ id, isActive, intervalType, la
     return (
         <button
             type="button"
-            className={`white-key relative flex-1 h-full border border-gray-800 rounded-b cursor-pointer flex items-end justify-center pb-2 text-sm select-none transition-colors duration-100 outline-none focus-visible:shadow-[inset_0_0_0_6px_#2563eb] focus:z-10 bg-white ${textColorClass}`}
+            className={`white-key relative flex-1 h-full border border-gray-800 rounded-b cursor-pointer flex items-end justify-center pb-2 text-sm select-none transition-colors duration-100 outline-none bg-white ${textColorClass}`}
             style={{
                 zIndex: 1,
                 backgroundImage: 'linear-gradient(to bottom, #ffffff 0%, #e6e6e6 100%)',
@@ -205,7 +205,7 @@ const BlackKey: React.FC<BlackKeyProps> = memo(({ id, isActive, intervalType, la
     return (
         <button
             type="button"
-            className="black-key absolute h-2/3 rounded-b border border-black cursor-pointer flex items-end justify-center pb-2 text-[10px] select-none transition-colors duration-100 outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-blue-400 focus:z-[100] bg-black"
+            className="black-key absolute h-2/3 rounded-b border border-black cursor-pointer flex items-end justify-center pb-2 text-[10px] select-none transition-colors duration-100 outline-none bg-black"
             style={{
                 left: leftOffset,
                 width: '4%',
