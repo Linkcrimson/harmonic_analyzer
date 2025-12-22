@@ -61,6 +61,7 @@ export const SectorArc: React.FC<SectorArcProps> = ({
                         e.stopPropagation();
                         onClick(sector.title, sector.description, e);
                     }}
+                    onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -107,6 +108,7 @@ export const SectorArc: React.FC<SectorArcProps> = ({
                     e.stopPropagation();
                     onClick(sector.title, sector.description, e);
                 }}
+                onMouseDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
