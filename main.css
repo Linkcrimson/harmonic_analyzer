@@ -274,3 +274,10 @@ body {
 .hide-scroll::-webkit-scrollbar {
     display: none;
 }
+
+/* Tooltip Trigger Fixes */
+.tooltip-trigger {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+}

@@ -65,7 +65,7 @@ export const SectorArc: React.FC<SectorArcProps> = ({
                         }
                     }}
                     style={{ cursor: 'help' }}
-                    className="tooltip-trigger focus:outline-none focus:stroke-white focus:stroke-[3px]"
+                    className="tooltip-trigger focus-visible:outline-none focus-visible:stroke-white focus-visible:stroke-[3px] select-none"
                     tabIndex={0}
                     role="button"
                     aria-label={sector.title}
@@ -107,7 +107,7 @@ export const SectorArc: React.FC<SectorArcProps> = ({
                     }
                 }}
                 style={{ cursor: 'help' }}
-                className="tooltip-trigger focus:outline-none focus:stroke-white focus:stroke-[3px]"
+                className="tooltip-trigger focus-visible:outline-none focus-visible:stroke-white focus-visible:stroke-[3px] select-none"
                 tabIndex={0}
                 role="button"
                 aria-label={sector.title}
