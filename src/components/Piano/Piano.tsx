@@ -205,7 +205,7 @@ const BlackKey: React.FC<BlackKeyProps> = memo(({ id, isActive, intervalType, la
     return (
         <button
             type="button"
-            className="black-key absolute h-2/3 rounded-b border border-black cursor-pointer flex items-end justify-center pb-2 text-[10px] select-none transition-colors duration-100 outline-none focus-visible:shadow-[inset_0_0_0_6px_#60a5fa] focus:z-20 bg-black"
+            className="black-key absolute h-2/3 rounded-b border border-black cursor-pointer flex items-end justify-center pb-2 text-[10px] select-none transition-colors duration-100 outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-blue-400 focus:z-[100] bg-black"
             style={{
                 left: leftOffset,
                 width: '4%',
