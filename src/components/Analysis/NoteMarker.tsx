@@ -13,6 +13,7 @@ interface NoteMarkerProps {
     pos: { x: number; y: number };
     labelPos: { x: number; y: number };
     contextIntervals: number[];
+    isPlaying?: boolean;
     onMouseEnter: (title: string, content: React.ReactNode, e: React.MouseEvent) => void;
     onMouseMove: (e: React.MouseEvent) => void;
     onMouseLeave: () => void;
@@ -24,6 +25,7 @@ export const NoteMarker: React.FC<NoteMarkerProps> = ({
     pos,
     labelPos,
     contextIntervals,
+    isPlaying = false,
     onMouseEnter,
     onMouseMove,
     onMouseLeave,
@@ -47,6 +49,17 @@ export const NoteMarker: React.FC<NoteMarkerProps> = ({
 
     return (
         <g>
+            {/* Visual Feedback Ripple */}
+            <circle
+                cx={pos.x}
+                cy={pos.y}
+                r={25}
+                fill={getIntervalColor(note.type)}
+                className={`pointer-events-none transition-all ease-out ${isPlaying ? 'duration-0 opacity-50 scale-100' : 'duration-500 opacity-0 scale-50'
+                    }`}
+                style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
+            />
+
             {/* Ghost Hit Area */}
             <circle
                 cx={pos.x}

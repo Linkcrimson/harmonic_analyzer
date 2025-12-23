@@ -150,6 +150,14 @@ export const TOOLTIPS_EN = {
     // GENERIC
     unknown: {
         title: "Interval",
-        description: "Complex or chromatic analysis - Specific role in this voicing to be defined."
+        description: "Complex or chromatic analysis - Specific role to be defined in this voicing."
+    },
+
+    // AUDIO MODES
+    audio_modes: {
+        short: "Percussive",
+        continuous: "Continuous",
+        repeat: "Repeat",
+        arpeggio: "Arpeggio"
     }
 };

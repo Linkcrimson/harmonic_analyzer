@@ -13,6 +13,7 @@ const waveforms: { value: OscillatorType; label: string }[] = [
 const audioModes: { value: AudioMode; label: string }[] = [
     { value: 'short', label: 'Breve' },
     { value: 'repeat', label: 'Ripeti' },
+    { value: 'arpeggio', label: 'Arpeggio' },
     { value: 'continuous', label: 'Continuo' }
 ];
 
@@ -34,6 +35,11 @@ const AudioModeIcon: React.FC<{ mode: AudioMode }> = ({ mode }) => {
                 <path d="M4 12h3" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                 <path d="M10.5 12h3" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                 <path d="M17 12h3" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </>
+        );
+        case 'arpeggio': return (
+            <>
+                <path d="M4 14l4-4 4 4 4-4 4 4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </>
         );
         case 'continuous': return <path d="M4 12h16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />;

@@ -151,5 +151,13 @@ export const TOOLTIPS_IT = {
     unknown: {
         title: "Intervallo",
         description: "Analisi complessa o cromatica - Da definire il ruolo specifico in questo voicing."
+    },
+
+    // AUDIO MODES
+    audio_modes: {
+        short: "Percussivo",
+        continuous: "Continuo",
+        repeat: "Ripetuto",
+        arpeggio: "Arpeggio"
     }
 };

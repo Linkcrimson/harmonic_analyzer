@@ -1,9 +1,16 @@
 {
+    "audio_modes": {
+        "short": "Percussivo",
+        "continuous": "Continuo",
+        "repeat": "Ripetuto",
+        "arpeggio": "Arpeggio"
+    },
     "settings": {
         "title": "Impostazioni",
         "language": "Lingua",
         "theme": "Aspetto",
         "input": "Input",
+        "audio": "Audio",
         "notation": "Notazione",
         "app": "App"
     },

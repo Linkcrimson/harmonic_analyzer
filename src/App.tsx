@@ -10,6 +10,7 @@ import { Piano } from './components/Piano/Piano';
 import { UpdateManager } from './components/UpdateManager';
 import { AppToolbar } from './components/AppToolbar';
 import { MetaManager } from './components/SEO/MetaManager';
+import { PlaybackPanel } from './components/Analysis/PlaybackPanel';
 
 const AppContent: React.FC = () => {
     const pianoScrollRef = React.useRef<HTMLDivElement>(null);
@@ -33,17 +34,22 @@ const AppContent: React.FC = () => {
                 </div>
 
                 {/* Right Column: Keyboard & Controls (7 cols) */}
-                <div className="fixed bottom-0 left-0 right-0 z-50 lg:relative lg:col-span-7 flex flex-col bg-[#111] rounded-t-3xl lg:rounded-3xl border-t lg:border border-[#222] p-4 pb-2 lg:p-8 min-h-0 lg:min-h-[500px] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] lg:shadow-none">
+                <div className="fixed bottom-0 left-0 right-0 z-50 lg:relative lg:col-span-7 flex flex-col bg-[#111] rounded-t-3xl lg:rounded-3xl border-t lg:border border-[#222] p-4 pb-0 lg:p-8 min-h-0 lg:h-auto shadow-[0_-10px_40px_rgba(0,0,0,0.5)] lg:shadow-none">
                     {/* Background Decoration */}
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-purple-900/10 pointer-events-none"></div>
 
-                    <div className="w-full">
+                    <div className="w-full relative z-50">
                         <Controls scrollContainerRef={pianoScrollRef} />
                     </div>
 
-                    {/* Center Piano vertically in the remaining space, but biased towards top to match circle */}
-                    <div className="flex-1 flex items-start justify-center w-full mt-4 lg:mt-24">
+                    {/* Center Piano vertically in the remaining space */}
+                    <div className="flex-1 lg:flex-none flex items-start justify-center w-full mt-4 lg:mt-0">
                         <Piano ref={pianoScrollRef} />
+                    </div>
+
+                    {/* Contextual Audio Panel (Below Keyboard) */}
+                    <div className="w-full relative z-40">
+                        <PlaybackPanel />
                     </div>
                 </div>
             </div>

@@ -7,6 +7,7 @@ import { InputSettings } from './Settings/InputSettings';
 import { AppSettings } from './Settings/AppSettings';
 import { NotationSettings } from './Settings/NotationSettings';
 
+
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
