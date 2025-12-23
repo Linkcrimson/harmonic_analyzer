@@ -65,6 +65,8 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
     const [hoveredInfo, setHoveredInfo] = useState<TooltipInfo | null>(null);
     const [isTooltipLocked, setIsTooltipLocked] = useState(false);
     const closeTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Ref to prevent immediate close after opening (handles touch + synthetic mousedown race)
+    const justOpenedRef = React.useRef(false);
 
     const clearCloseTimeout = () => {
         if (closeTimeoutRef.current) {
@@ -109,6 +111,10 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
 
     const handleTriggerClick = (title: string, content: React.ReactNode, e: React.MouseEvent) => {
         clearCloseTimeout();
+        // Mark as just opened to ignore the next close event
+        justOpenedRef.current = true;
+        setTimeout(() => { justOpenedRef.current = false; }, 100);
+
         setHoveredInfo({
             title,
             content,
@@ -127,6 +133,9 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
             setIsTooltipLocked(false);
         };
         const handler = (e: MouseEvent | TouchEvent) => {
+            // Skip if tooltip was just opened (prevents race condition with synthetic events)
+            if (justOpenedRef.current) return;
+
             if (!(e.target as HTMLElement).closest('.tooltip-trigger') &&
                 !(e.target as HTMLElement).closest('.tooltip-box')) {
                 closeAll();

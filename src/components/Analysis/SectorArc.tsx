@@ -62,7 +62,19 @@ export const SectorArc: React.FC<SectorArcProps> = ({
                         onClick(sector.title, sector.description, e);
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => {
+                        e.stopPropagation();
+                        // Create a synthetic mouse event from touch for mobile
+                        const touch = e.touches[0];
+                        const syntheticEvent = {
+                            ...e,
+                            clientX: touch.clientX,
+                            clientY: touch.clientY,
+                            stopPropagation: () => e.stopPropagation(),
+                            preventDefault: () => e.preventDefault()
+                        } as unknown as React.MouseEvent;
+                        onClick(sector.title, sector.description, syntheticEvent);
+                    }}
                     onTouchEnd={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -110,7 +122,19 @@ export const SectorArc: React.FC<SectorArcProps> = ({
                     onClick(sector.title, sector.description, e);
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
+                onTouchStart={(e) => {
+                    e.stopPropagation();
+                    // Create a synthetic mouse event from touch for mobile
+                    const touch = e.touches[0];
+                    const syntheticEvent = {
+                        ...e,
+                        clientX: touch.clientX,
+                        clientY: touch.clientY,
+                        stopPropagation: () => e.stopPropagation(),
+                        preventDefault: () => e.preventDefault()
+                    } as unknown as React.MouseEvent;
+                    onClick(sector.title, sector.description, syntheticEvent);
+                }}
                 onTouchEnd={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {

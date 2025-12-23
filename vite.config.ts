@@ -37,6 +37,9 @@ export default defineConfig({
         '__APP_VERSION__': JSON.stringify(packageJson.version),
     },
     base: './', // Ensure relative paths for GitHub Pages
+    server: {
+        host: true // Enable network access for mobile testing
+    },
     build: {
         outDir: 'docs' // Build to docs folder for GitHub Pages
     },
