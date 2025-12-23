@@ -10,7 +10,7 @@ export class ArpeggiatorEngine {
     private sortMode: ArpSortMode = 'pitch';
     private division: number = 1 / 8; // 8th notes
     private octaves: number = 1;
-    private rootPitch: number = 0;
+    private intervals: Map<number, string> = new Map();
     private active: boolean = false;
 
     private notes: number[] = [];
@@ -22,7 +22,7 @@ export class ArpeggiatorEngine {
 
     private waveform: OscillatorType = 'sine';
 
-    public setConfig(config: { bpm?: number, pattern?: ArpPattern, sortMode?: ArpSortMode, division?: number, octaves?: number, waveform?: OscillatorType, rootPitch?: number }) {
+    public setConfig(config: { bpm?: number, pattern?: ArpPattern, sortMode?: ArpSortMode, division?: number, octaves?: number, waveform?: OscillatorType, intervals?: Map<number, string> }) {
         let regenerate = false;
         if (config.bpm) this.bpm = config.bpm;
         if (config.pattern) {
@@ -39,14 +39,28 @@ export class ArpeggiatorEngine {
             regenerate = true;
         }
         if (config.waveform) this.waveform = config.waveform;
-        if (config.rootPitch !== undefined && config.rootPitch !== this.rootPitch) {
-            this.rootPitch = config.rootPitch;
+        if (config.intervals) {
+            this.intervals = config.intervals;
             if (this.sortMode === 'harmonic') regenerate = true;
         }
 
         if (regenerate && this.baseNotes.length > 0) {
             this.generateNotes();
         }
+    }
+
+    private getHarmonicRank(note: number): number {
+        // Try exact MIDI match first, then Pitch Class match
+        let type = this.intervals.get(note);
+        if (!type) type = this.intervals.get(note % 12);
+
+        if (!type) return 99; // Unknown/Non-chord tone last
+
+        if (type === 'root') return 0;
+        if (type.includes('3') || type === 'sus4' || type === '4') return 1; // 3rds and Sus4
+        if (type.includes('5') || type === '5') return 2; // 5ths
+        if (type.includes('7') || type === '6') return 3; // 7ths and 6ths
+        return 4; // Extensions (2, 9, 11, 13)
     }
 
     private generateNotes() {
@@ -58,14 +72,12 @@ export class ArpeggiatorEngine {
         const uniqueNotes = [...new Set(this.baseNotes)];
 
         if (this.sortMode === 'harmonic') {
-            // Sort by Harmonic Function (Interval from Root: Root, b2, 2, ..., 7)
             uniqueNotes.sort((a, b) => {
-                // Calculate interval from root (0-11)
-                const intervalA = (a - this.rootPitch + 1200) % 12;
-                const intervalB = (b - this.rootPitch + 1200) % 12;
+                const rankA = this.getHarmonicRank(a);
+                const rankB = this.getHarmonicRank(b);
 
-                // Primary sort: Interval (Root < 3rd < 5th < 7th)
-                if (intervalA !== intervalB) return intervalA - intervalB;
+                // Primary sort: Harmonic Function Rank
+                if (rankA !== rankB) return rankA - rankB;
 
                 // Secondary sort: Pitch (Low to High)
                 return a - b;
