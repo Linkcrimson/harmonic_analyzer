@@ -1,4 +1,5 @@
 import React from 'react';
+import { getIntervalColor } from '../../utils/intervalColors';
 import { getDidacticExplanation } from '../../utils/didacticTooltips';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -12,6 +13,7 @@ interface ExtensionMarkerProps {
     pos: { x: number; y: number };
     labelPos: { x: number; y: number };
     contextIntervals: number[];
+    isPlaying?: boolean;
     onMouseEnter: (title: string, content: React.ReactNode, e: React.MouseEvent) => void;
     onMouseMove: (e: React.MouseEvent) => void;
     onMouseLeave: () => void;
@@ -24,6 +26,7 @@ export const ExtensionMarker: React.FC<ExtensionMarkerProps> = ({
     pos,
     labelPos,
     contextIntervals,
+    isPlaying = false,
     onMouseEnter,
     onMouseMove,
     onMouseLeave,
@@ -47,11 +50,22 @@ export const ExtensionMarker: React.FC<ExtensionMarkerProps> = ({
 
     return (
         <g>
+            {/* Visual Feedback Ripple */}
+            <circle
+                cx={pos.x}
+                cy={pos.y}
+                r={22}
+                fill={getIntervalColor(note.type)}
+                className={`pointer-events-none transition-all ease-out ${isPlaying ? 'duration-0 opacity-50 scale-100' : 'duration-500 opacity-0 scale-50'
+                    }`}
+                style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
+            />
+
             {/* Ghost Hit Area */}
             <circle
                 cx={pos.x}
                 cy={pos.y}
-                r={25}
+                r={22}
                 fill="transparent"
                 stroke="none"
                 onMouseEnter={(e) => onMouseEnter(didactic.title, content, e)}

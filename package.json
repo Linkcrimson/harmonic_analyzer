@@ -1,6 +1,6 @@
 {
   "name": "harmonic_analyzer",
-  "version": "1.0.44",
+  "version": "1.0.45",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -38,6 +38,7 @@
     "vitest": "^4.0.16"
   },
   "dependencies": {
+    "framer-motion": "^12.23.26",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-helmet-async": "^2.0.5"

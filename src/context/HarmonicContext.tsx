@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { useAudio, OscillatorType } from '../hooks/useAudio';
+import { OscillatorType } from '../audio/SynthVoice';
+import { audioEngine } from '../audio/AudioEngine';
+import { arpEngine, ArpPattern, ArpSortMode } from '../audio/ArpeggiatorEngine';
 import { useMidi } from '../hooks/useMidi';
 import { useKeyboardMidi } from '../hooks/useKeyboardMidi';
 import { useNotation } from './NotationContext';
@@ -10,7 +12,7 @@ export const SMART_INPUT_LOCK_THRESHOLD_MS = 500;
 
 
 export type InputMode = 'toggle' | 'momentary' | 'smart';
-export type AudioMode = 'short' | 'continuous' | 'repeat';
+export type AudioMode = 'short' | 'continuous' | 'repeat' | 'arpeggio';
 
 interface HarmonicState {
     activeNotes: Set<number>;
@@ -52,6 +54,20 @@ interface HarmonicState {
     lockedNotes: Set<number>;
     checkEnharmonic: boolean;
     toggleEnharmonic: () => void;
+    bpm: number;
+    setBpm: (bpm: number) => void;
+    arpPattern: ArpPattern;
+    setArpPattern: (pattern: ArpPattern) => void;
+    arpSortMode: ArpSortMode;
+    setArpSortMode: (mode: ArpSortMode) => void;
+    arpDivision: number;
+    setArpDivision: (div: number) => void;
+    arpOctaves: number;
+    setArpOctaves: (oct: number) => void;
+    masterVolume: number;
+    setMasterVolume: (vol: number) => void;
+    shortDuration: number;
+    setShortDuration: (dur: number) => void;
 }
 
 export const HarmonicContext = createContext<HarmonicState | null>(null);
@@ -71,6 +87,13 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [audioMode, setAudioMode] = useState<AudioMode>('short');
     const [lockedNotes, setLockedNotes] = useState<Set<number>>(new Set());
     const [checkEnharmonic, setCheckEnharmonic] = useState(true);
+    const [bpm, setBpm] = useState(120);
+    const [arpPattern, setArpPattern] = useState<ArpPattern>('up');
+    const [arpSortMode, setArpSortMode] = useState<ArpSortMode>('pitch');
+    const [arpDivision, setArpDivision] = useState(1 / 8);
+    const [arpOctaves, setArpOctaves] = useState(1);
+    const [masterVolume, setMasterVolumeState] = useState(0.5);
+    const [shortDuration, setShortDuration] = useState(0.3);
     const inputStartTimes = useRef<Map<number, number>>(new Map());
     const repeatIntervalRef = useRef<number | null>(null);
     const { settings: notationSettings } = useNotation();
@@ -100,15 +123,20 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
     });
 
-    const { initAudio, startNote, stopNote, playTone, getFrequency, setNoteVolume, setNoteWaveform } = useAudio();
+    // const { initAudio, startNote, stopNote, playTone, getFrequency, setNoteVolume, setNoteWaveform } = useAudio();
+    // Replaced by AudioEngine
     const workerRef = useRef<Worker | null>(null);
+
+    const requestIdRef = useRef<number>(0);
 
     useEffect(() => {
         workerRef.current = new HarmonicWorker();
         workerRef.current.onmessage = (e) => {
-            const { chordOptions, analysis } = e.data;
-            setChordOptions(chordOptions);
-            setAnalysis(analysis);
+            const { chordOptions, analysis, requestId } = e.data;
+            if (requestId === requestIdRef.current) {
+                setChordOptions(chordOptions);
+                setAnalysis(analysis);
+            }
         };
 
         return () => {
@@ -121,7 +149,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // By initializing on any click/touch, we prevent the delay when the first note is played.
     useEffect(() => {
         const warmUp = () => {
-            initAudio();
+            audioEngine.resume();
             window.removeEventListener('click', warmUp);
             window.removeEventListener('touchstart', warmUp);
         };
@@ -131,17 +159,21 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             window.removeEventListener('click', warmUp);
             window.removeEventListener('touchstart', warmUp);
         };
-    }, [initAudio]);
+    }, []);
 
     const analyze = useCallback((notes: Set<number>, selectedIndex: number = 0, bassAsRoot: boolean = false, useEnharmonic: boolean = true) => {
         if (!workerRef.current) return;
 
         const sortedNotes = Array.from(notes).sort((a, b) => a - b);
+        const newRequestId = requestIdRef.current + 1;
+        requestIdRef.current = newRequestId;
+
         workerRef.current.postMessage({
             activeNotes: sortedNotes,
             selectedIndex,
             bassAsRoot,
-            useEnharmonic
+            useEnharmonic,
+            requestId: newRequestId
         });
     }, []);
 
@@ -151,18 +183,21 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const playChordNotes = useCallback((notes: Set<number>) => {
         if (notes.size === 0) return;
-        initAudio();
-        const volPerNote = 0.4 / Math.max(1, notes.size);
-        const sortedNotes = Array.from(notes).sort((a, b) => a - b);
 
-        sortedNotes.forEach((noteId, index) => {
-            const freq = getFrequency(noteId);
-            setTimeout(() => playTone(freq, 1.5, currentWaveform, volPerNote), index * 30);
-        });
-    }, [currentWaveform, getFrequency, playTone, initAudio]);
+        const sortedNotes = Array.from(notes).sort((a, b) => a - b);
+        const frequencies = sortedNotes.map(n => audioEngine.getFrequency(n));
+
+        if (audioMode === 'arpeggio') {
+            arpEngine.start(sortedNotes);
+        } else {
+            // Use the new precise scheduling engine
+            // Duration controlled by shortDuration state (default 0.3s)
+            audioEngine.playStrum(sortedNotes, frequencies, currentWaveform, shortDuration, 'simultaneous', 0);
+        }
+
+    }, [currentWaveform, audioMode]);
 
     const toggleNote = useCallback((noteId: number) => {
-        initAudio();
         const newSet = new Set(activeNotes);
         const isLocked = lockedNotes.has(noteId);
 
@@ -175,34 +210,27 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 });
             }
             newSet.delete(noteId);
-            stopNote(noteId);
+            audioEngine.noteOff(noteId);
 
-            // Re-scale remaining notes
-            if (audioMode === 'continuous') {
-                const volPerNote = 0.4 / Math.max(1, newSet.size);
-                newSet.forEach(id => setNoteVolume(id, volPerNote));
-            }
+            // Re-scale remaining notes - NOT NEEDED with AudioEngine (handled by Master/Compressor usually, but we can add logic if needed)
+            // AudioEngine manages individual voice gain. For now we skip dynamic volume rescaling per note
+            // as it complicates the engine unnecessarily for this phase. The compressor handles aggregate levels.
 
         } else {
             newSet.add(noteId);
-            if (audioMode === 'short' || audioMode === 'repeat') {
-                // Play full chord instead of single note
+            if (audioMode === 'short' || audioMode === 'repeat' || audioMode === 'arpeggio') {
+                // Play full chord or start arp
                 playChordNotes(newSet);
             } else {
-                const volPerNote = 0.4 / Math.max(1, newSet.size);
-                // Scale existing notes down
-                newSet.forEach(id => {
-                    if (id !== noteId) setNoteVolume(id, volPerNote);
-                });
-                startNote(noteId, getFrequency(noteId), currentWaveform, volPerNote);
+                // Continuous mode
+                audioEngine.noteOn(noteId, audioEngine.getFrequency(noteId), currentWaveform, 0.5);
             }
         }
         setActiveNotes(newSet);
         setSelectedOptionIndex(0);
-    }, [activeNotes, lockedNotes, audioMode, playChordNotes, stopNote, startNote, getFrequency, currentWaveform, initAudio, setNoteVolume]);
+    }, [activeNotes, lockedNotes, audioMode, playChordNotes, currentWaveform]);
 
     const startInput = useCallback((noteId: number, source: 'ui' | 'midi' = 'ui') => {
-        initAudio();
         inputStartTimes.current.set(noteId, Date.now());
 
         const effectiveMode = source === 'midi' ? 'momentary' : inputMode;
@@ -214,21 +242,17 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 const newSet = new Set(prev);
                 newSet.add(noteId);
 
-                if (audioMode === 'short' || audioMode === 'repeat') {
-                    // Play full chord instead of just the triggered note
+                if (audioMode === 'short' || audioMode === 'repeat' || audioMode === 'arpeggio') {
+                    // Play full chord or start arp
                     playChordNotes(newSet);
                 } else {
-                    const volPerNote = 0.4 / Math.max(1, newSet.size);
-                    // Update others
-                    prev.forEach(id => setNoteVolume(id, volPerNote));
-                    // Start new
-                    startNote(noteId, getFrequency(noteId), currentWaveform, volPerNote);
+                    audioEngine.noteOn(noteId, audioEngine.getFrequency(noteId), currentWaveform, 0.5);
                 }
 
                 return newSet;
             });
         }
-    }, [inputMode, audioMode, toggleNote, startNote, getFrequency, currentWaveform, initAudio, playChordNotes, setNoteVolume]);
+    }, [inputMode, audioMode, toggleNote, currentWaveform, playChordNotes]);
 
     const stopInput = useCallback((noteId: number, source: 'ui' | 'midi' = 'ui') => {
         const startTime = inputStartTimes.current.get(noteId) || 0;
@@ -243,15 +267,17 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             setActiveNotes(prev => {
                 const newSet = new Set(prev);
                 newSet.delete(noteId);
-
-                if (audioMode === 'continuous') {
-                    const volPerNote = 0.4 / Math.max(1, newSet.size);
-                    newSet.forEach(id => setNoteVolume(id, volPerNote));
-                }
-
+                // Volume rescaling skipped
                 return newSet;
             });
-            stopNote(noteId);
+            audioEngine.noteOff(noteId);
+            if (audioMode === 'arpeggio') {
+                // Update arp engine with remaining notes
+                setActiveNotes(prev => {
+                    arpEngine.updateNotes(Array.from(prev));
+                    return prev;
+                });
+            }
         } else if (effectiveMode === 'smart') {
             if (duration > SMART_INPUT_LOCK_THRESHOLD_MS) {
                 setLockedNotes(prev => {
@@ -270,34 +296,20 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     setActiveNotes(prev => {
                         const u = new Set(prev);
                         u.delete(noteId);
-
-                        // Rescale volume if note removed
-                        if (audioMode === 'continuous') {
-                            const volPerNote = 0.4 / Math.max(1, u.size);
-                            u.forEach(id => setNoteVolume(id, volPerNote));
-                        }
-
                         return u;
                     });
-                    stopNote(noteId);
+                    audioEngine.noteOff(noteId);
                 } else {
                     setActiveNotes(prev => {
                         const u = new Set(prev);
                         u.delete(noteId);
-
-                        // Rescale volume
-                        if (audioMode === 'continuous') {
-                            const volPerNote = 0.4 / Math.max(1, u.size);
-                            u.forEach(id => setNoteVolume(id, volPerNote));
-                        }
-
                         return u;
                     });
-                    stopNote(noteId);
+                    audioEngine.noteOff(noteId);
                 }
             }
         }
-    }, [inputMode, audioMode, stopNote, lockedNotes, setNoteVolume]);
+    }, [inputMode, audioMode, lockedNotes]);
 
     useEffect(() => {
         if (audioMode === 'repeat' && activeNotes.size > 0) {
@@ -311,48 +323,77 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, [audioMode, activeNotes, playChordNotes]);
 
     useEffect(() => {
-        if (activeNotes.size === 0) return;
-
-        activeNotes.forEach(n => stopNote(n));
+        if (activeNotes.size === 0) {
+            // Stop all if empty? Or just let noteOff handle it. 
+            // Ideally we want to stop any lingering voices if set is cleared abruptly
+            if (activeNotes.size === 0) audioEngine.stopAll();
+            return;
+        }
 
         if (audioMode === 'continuous') {
-            const volPerNote = 0.4 / Math.max(1, activeNotes.size);
+            // Ensure all active notes are playing
             activeNotes.forEach(n => {
-                startNote(n, getFrequency(n), currentWaveform, volPerNote);
+                audioEngine.noteOn(n, audioEngine.getFrequency(n), currentWaveform, 0.5);
             });
-        } else if (audioMode === 'short') {
-            playChordNotes(activeNotes);
-        } else if (audioMode === 'repeat') {
+        } else if (audioMode === 'short' || audioMode === 'repeat' || audioMode === 'arpeggio') {
             playChordNotes(activeNotes);
         }
+
+        // Handle stop
+        if (audioMode !== 'arpeggio') {
+            arpEngine.stop();
+        }
     }, [audioMode]);
+
+    // Update Arp Engine config whenever state changes
+    useEffect(() => {
+        arpEngine.setConfig({
+            bpm,
+            pattern: arpPattern,
+            sortMode: arpSortMode,
+            division: arpDivision,
+            octaves: arpOctaves,
+            waveform: currentWaveform,
+            intervals: analysis.intervals
+        });
+    }, [bpm, arpPattern, arpSortMode, arpDivision, arpOctaves, currentWaveform, analysis.intervals]);
+
+    // Synchronize Arp notes when activeNotes changes
+    useEffect(() => {
+        if (audioMode === 'arpeggio') {
+            arpEngine.updateNotes(Array.from(activeNotes));
+        }
+    }, [activeNotes, audioMode]);
 
     const playCurrentChord = useCallback(() => {
         playChordNotes(activeNotes);
     }, [activeNotes, playChordNotes]);
 
     const reset = useCallback(() => {
-        activeNotes.forEach(noteId => stopNote(noteId));
+        activeNotes.forEach(noteId => audioEngine.noteOff(noteId));
+        arpEngine.stop();
         setActiveNotes(new Set());
         setSelectedOptionIndex(0);
-    }, [activeNotes, stopNote]);
+    }, [activeNotes]);
 
     const setWaveform = useCallback((type: OscillatorType) => {
         setCurrentWaveform(type);
-        // Reactive update for active oscillators
-        activeNotes.forEach(noteId => {
-            setNoteWaveform(noteId, type);
-        });
-    }, [activeNotes, setNoteWaveform]);
+        audioEngine.setGlobalWaveform(type);
+    }, []);
 
     const selectChordOption = useCallback((index: number) => {
         setSelectedOptionIndex(index);
     }, []);
 
+    const setMasterVolume = useCallback((vol: number) => {
+        setMasterVolumeState(vol);
+        audioEngine.setMasterVolume(vol);
+    }, []);
+
     const [sustainPedal, setSustainPedal] = useState(false);
-    const heldNotesRef = React.useRef<Set<number>>(new Set());
-    const sustainPedalRef = React.useRef(false);
-    const notesPendingOffRef = React.useRef<Set<number>>(new Set());
+    const heldNotesRef = useRef<Set<number>>(new Set());
+    const sustainPedalRef = useRef(false);
+    const notesPendingOffRef = useRef<Set<number>>(new Set());
 
     const onMidiNoteOnRef = useCallback((note: number, _velocity: number) => {
         const noteId = note - 60;
@@ -427,7 +468,21 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             stopInput,
             lockedNotes,
             checkEnharmonic,
-            toggleEnharmonic
+            toggleEnharmonic,
+            bpm,
+            setBpm,
+            arpPattern,
+            setArpPattern,
+            arpSortMode,
+            setArpSortMode,
+            arpDivision,
+            setArpDivision,
+            arpOctaves,
+            setArpOctaves,
+            masterVolume,
+            setMasterVolume,
+            shortDuration,
+            setShortDuration
         }}>
             {children}
         </HarmonicContext.Provider>

@@ -8,10 +8,12 @@ interface AnalysisRequest {
     selectedIndex: number;
     bassAsRoot: boolean;
     useEnharmonic: boolean;
+    requestId: number;
 }
 
 // Define the interface for the response sent back to the main thread
 export interface AnalysisResponse {
+    requestId: number;
     chordOptions: any[];
     analysis: {
         rootName: string;
@@ -34,11 +36,11 @@ export interface AnalysisResponse {
 const analysisCache = new Map<string, any>();
 
 self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
-    const { activeNotes, selectedIndex, bassAsRoot, useEnharmonic } = e.data;
+    const { activeNotes, selectedIndex, bassAsRoot, useEnharmonic, requestId } = e.data;
     const cacheKey = `${activeNotes.join(',')}|${selectedIndex}|${bassAsRoot}|${useEnharmonic}`;
 
     if (analysisCache.has(cacheKey)) {
-        self.postMessage(analysisCache.get(cacheKey));
+        self.postMessage({ ...analysisCache.get(cacheKey), requestId });
         return;
     }
 
@@ -46,6 +48,7 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
 
     if (notes.size === 0) {
         self.postMessage({
+            requestId,
             chordOptions: [],
             analysis: {
                 rootName: '--',
@@ -157,7 +160,7 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
             }
         };
         analysisCache.set(cacheKey, response);
-        self.postMessage(response);
+        self.postMessage({ ...response, requestId });
     } else {
         const fallbackIntervals = new Map<number, string>();
         sortedNotes.forEach(n => fallbackIntervals.set(n, 'active'));
@@ -181,6 +184,6 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
             }
         };
         analysisCache.set(cacheKey, response);
-        self.postMessage(response);
+        self.postMessage({ ...response, requestId });
     }
 };

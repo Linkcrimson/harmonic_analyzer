@@ -1,6 +1,8 @@
+
 import React, { useMemo, useState } from 'react';
 import { useHarmonic } from '../../context/HarmonicContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAudioFeedback } from '../../hooks/useAudioFeedback';
 import { Tooltip, TooltipInfo } from '../Tooltip';
 import { NoteMarker } from './NoteMarker';
 import { SectorArc } from './SectorArc';
@@ -13,6 +15,7 @@ interface HarmonicCircleProps {
 
 export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) => {
     const { activeNotes, analysis, chordName, chordOptions, selectedOptionIndex } = useHarmonic();
+    const { playingNotes } = useAudioFeedback();
     const { intervals, noteNames } = analysis;
     const { t } = useLanguage();
 
@@ -158,12 +161,20 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
         { label: 'Sevenths', range: [9, 11] as [number, number], type: 'seventh', colorVar: '--col-seventh', title: t('sectors.sevenths.title'), description: t('sectors.sevenths.desc') },
     ];
 
+    const isNotePlaying = (noteId: number) => {
+        const targetPitch = noteId % 12;
+        for (const playingNoteId of playingNotes) {
+            if (playingNoteId % 12 === targetPitch) return true;
+        }
+        return false;
+    };
+
     return (
         <div className="relative flex justify-center items-center p-0">
             <svg
                 width="100%"
                 height="100%"
-                viewBox={`0 0 ${size} ${size}`}
+                viewBox={`0 0 ${size} ${size} `}
                 onMouseLeave={handleMouseLeave}
             >
                 {/* Background Circle */}
@@ -182,11 +193,12 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                         // Active notes in sector -> render NoteMarkers
                         return notesInSector.map((note, i) => (
                             <NoteMarker
-                                key={`${sector.label}-${i}`}
+                                key={`${sector.label} -${i} `}
                                 note={note}
                                 pos={getPoint(note.idx)}
                                 labelPos={getPoint(note.idx, radius + 30)}
                                 contextIntervals={contextIntervals}
+                                isPlaying={isNotePlaying(note.noteId)}
                                 onMouseEnter={handleMouseEnter}
                                 onMouseMove={handleMouseMove}
                                 onMouseLeave={handleMouseLeave}
@@ -216,12 +228,13 @@ export const HarmonicCircle: React.FC<HarmonicCircleProps> = ({ size = 400 }) =>
                     if (!inSector) {
                         return (
                             <ExtensionMarker
-                                key={`ext-${idx}`}
+                                key={`ext - ${idx} `}
                                 idx={idx}
                                 note={note}
                                 pos={getPoint(idx)}
                                 labelPos={getPoint(idx, radius + 30)}
                                 contextIntervals={contextIntervals}
+                                isPlaying={isNotePlaying(note.noteId)}
                                 onMouseEnter={handleMouseEnter}
                                 onMouseMove={handleMouseMove}
                                 onMouseLeave={handleMouseLeave}
