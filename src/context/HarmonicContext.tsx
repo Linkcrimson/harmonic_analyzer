@@ -94,6 +94,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [arpOctaves, setArpOctaves] = useState(1);
     const [masterVolume, setMasterVolumeState] = useState(0.5);
     const [shortDuration, setShortDuration] = useState(0.3);
+    const [isManuallyStopped, setIsManuallyStopped] = useState(false);
     const inputStartTimes = useRef<Map<number, number>>(new Map());
     const repeatIntervalRef = useRef<number | null>(null);
     const { settings: notationSettings } = useNotation();
@@ -134,6 +135,10 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         workerRef.current.onmessage = (e) => {
             const { chordOptions, analysis, requestId } = e.data;
             if (requestId === requestIdRef.current) {
+                // Reconstitute Maps from serialized arrays
+                analysis.intervals = new Map(analysis.intervals as any);
+                analysis.noteNames = new Map(analysis.noteNames as any);
+
                 setChordOptions(chordOptions);
                 setAnalysis(analysis);
             }
@@ -226,6 +231,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 audioEngine.noteOn(noteId, audioEngine.getFrequency(noteId), currentWaveform, 0.5);
             }
         }
+        setIsManuallyStopped(false);
         setActiveNotes(newSet);
         setSelectedOptionIndex(0);
     }, [activeNotes, lockedNotes, audioMode, playChordNotes, currentWaveform]);
@@ -252,6 +258,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 return newSet;
             });
         }
+        setIsManuallyStopped(false);
     }, [inputMode, audioMode, toggleNote, currentWaveform, playChordNotes]);
 
     const stopInput = useCallback((noteId: number, source: 'ui' | 'midi' = 'ui') => {
@@ -369,11 +376,35 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         playChordNotes(activeNotes);
     }, [activeNotes, playChordNotes]);
 
+    const togglePlayback = useCallback(() => {
+        if (!isManuallyStopped && (activeNotes.size > 0)) {
+            // Stop
+            audioEngine.stopAll();
+            arpEngine.stop();
+            if (repeatIntervalRef.current) {
+                clearInterval(repeatIntervalRef.current);
+                repeatIntervalRef.current = null;
+            }
+            setIsManuallyStopped(true);
+        } else if (activeNotes.size > 0) {
+            // Resume
+            setIsManuallyStopped(false);
+            if (audioMode === 'continuous') {
+                activeNotes.forEach(n => {
+                    audioEngine.noteOn(n, audioEngine.getFrequency(n), currentWaveform, 0.5);
+                });
+            } else {
+                playChordNotes(activeNotes);
+            }
+        }
+    }, [isManuallyStopped, activeNotes, audioMode, currentWaveform, playChordNotes]);
+
     const reset = useCallback(() => {
         activeNotes.forEach(noteId => audioEngine.noteOff(noteId));
         arpEngine.stop();
         setActiveNotes(new Set());
         setSelectedOptionIndex(0);
+        setIsManuallyStopped(false);
     }, [activeNotes]);
 
     const setWaveform = useCallback((type: OscillatorType) => {
@@ -436,7 +467,8 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Map keyboard notes to 'ui' source to respect the selected inputMode (Smart/Toggle/Momentary)
     useKeyboardMidi(
         (noteId) => startInput(noteId, 'ui'),
-        (noteId) => stopInput(noteId, 'ui')
+        (noteId) => stopInput(noteId, 'ui'),
+        togglePlayback
     );
 
     return (

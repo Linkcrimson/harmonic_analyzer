@@ -31,7 +31,8 @@ const KEY_TO_NOTE: Record<string, number> = {
 
 export const useKeyboardMidi = (
     onNoteOn: (note: number) => void,
-    onNoteOff: (note: number) => void
+    onNoteOff: (note: number) => void,
+    onSpacebar?: () => void
 ) => {
     const pressedKeys = useRef<Set<string>>(new Set());
 
@@ -53,6 +54,10 @@ export const useKeyboardMidi = (
                 // onMidiNoteOnRef does `note - 60`. 
                 // So if we pass 0 here, it matches the app's internal 0 (C4).
                 onNoteOn(KEY_TO_NOTE[key]);
+            } else if (e.code === 'Space') {
+                if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
+                e.preventDefault();
+                onSpacebar?.();
             }
         };
 
