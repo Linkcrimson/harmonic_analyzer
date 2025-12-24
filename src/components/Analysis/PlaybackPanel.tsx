@@ -62,8 +62,35 @@ export const PlaybackPanel: React.FC = () => {
 
     const ArpControls = () => (
         <div className="flex flex-col gap-3 w-full">
-            {/* Row 1: Patterns & Octaves */}
+            {/* Row 1: Sort Mode & Patterns & Octaves */}
             <div className="flex flex-col sm:flex-row gap-3">
+                {/* Sort Mode */}
+                <div className="flex flex-col gap-1">
+                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider pl-1 font-mono text-center">Sort</div>
+                    <div className="flex bg-[#161616] rounded-lg p-1 border border-[#333]">
+                        <button
+                            onClick={() => setArpSortMode('pitch')}
+                            className={`w-8 flex items-center justify-center p-2 rounded text-xs font-bold font-mono transition-all ${arpSortMode === 'pitch'
+                                ? 'bg-cyan-900/50 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.2)]'
+                                : 'text-gray-500 hover:text-gray-300 hover:bg-[#222]'
+                                }`}
+                            title="Pitch Order"
+                        >
+                            P
+                        </button>
+                        <button
+                            onClick={() => setArpSortMode('harmonic')}
+                            className={`w-8 flex items-center justify-center p-2 rounded text-xs font-bold font-mono transition-all ${arpSortMode === 'harmonic'
+                                ? 'bg-cyan-900/50 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.2)]'
+                                : 'text-gray-500 hover:text-gray-300 hover:bg-[#222]'
+                                }`}
+                            title="Harmonic Order"
+                        >
+                            <IconHarmonic />
+                        </button>
+                    </div>
+                </div>
+
                 {/* Patterns */}
                 <div className="flex-1 flex flex-col gap-1">
                     <div className="px-1 flex items-center justify-center gap-2">
@@ -89,33 +116,6 @@ export const PlaybackPanel: React.FC = () => {
                                 {pat.icon}
                             </button>
                         ))}
-                    </div>
-                </div>
-
-                {/* Sort Mode */}
-                <div className="flex flex-col gap-1">
-                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider pl-1 font-mono text-center">Sort</div>
-                    <div className="flex bg-[#161616] rounded-lg p-1 border border-[#333]">
-                        <button
-                            onClick={() => setArpSortMode('pitch')}
-                            className={`w-8 flex items-center justify-center p-2 rounded text-xs font-bold font-mono transition-all ${arpSortMode === 'pitch'
-                                ? 'bg-cyan-900/50 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.2)]'
-                                : 'text-gray-500 hover:text-gray-300 hover:bg-[#222]'
-                                }`}
-                            title="Pitch Order"
-                        >
-                            P
-                        </button>
-                        <button
-                            onClick={() => setArpSortMode('harmonic')}
-                            className={`w-8 flex items-center justify-center p-2 rounded text-xs font-bold font-mono transition-all ${arpSortMode === 'harmonic'
-                                ? 'bg-cyan-900/50 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.2)]'
-                                : 'text-gray-500 hover:text-gray-300 hover:bg-[#222]'
-                                }`}
-                            title="Harmonic Order"
-                        >
-                            <IconHarmonic />
-                        </button>
                     </div>
                 </div>
 

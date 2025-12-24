@@ -1,5 +1,6 @@
 import { audioEngine } from './AudioEngine';
 import { OscillatorType } from './SynthVoice';
+import { positionVector } from '../../not251/src/positionVector';
 
 export type ArpPattern = 'up' | 'down' | 'updown' | 'random';
 export type ArpSortMode = 'pitch' | 'harmonic';
@@ -13,8 +14,12 @@ export class ArpeggiatorEngine {
     private intervals: Map<number, string> = new Map();
     private active: boolean = false;
 
-    private notes: number[] = [];
-    private baseNotes: number[] = []; // Store original notes to re-calculate on octave change
+    // Core data structures
+    private sortedNotes: number[] = [];  // Notes sorted by current mode (harmonic order or pitch)
+    private notePositions: positionVector | null = null;  // Position vector for ID-based manipulation
+
+    private notes: number[] = []; // Final expanded note sequence for playback
+    private baseNotes: number[] = []; // Original notes from the chord
     private currentIndex: number = 0;
     private nextNoteTime: number = 0;
     private timerId: number | null = null;
@@ -22,80 +27,105 @@ export class ArpeggiatorEngine {
 
     private waveform: OscillatorType = 'sine';
 
+    // Harmonic function order for sorting (lower = first)
+    // Order: Root -> 2nd/9th -> 3rd -> 4th/11th -> 5th -> 6th/13th -> 7th
+    private static readonly HARMONIC_ORDER: Record<string, number> = {
+        'root': 0,
+        'b9': 1, '9': 2, '#9': 3,
+        'third': 4,
+        '11': 5, '#11': 6,
+        'fifth': 7,
+        'b13': 8, '13': 9, '#13': 10,
+        'seventh': 11,
+        'ext': 12
+    };
+
     public setConfig(config: { bpm?: number, pattern?: ArpPattern, sortMode?: ArpSortMode, division?: number, octaves?: number, waveform?: OscillatorType, intervals?: Map<number, string> }) {
-        let regenerate = false;
+        let rebuildPositions = false;
+        let rebuildSequence = false;
+
         if (config.bpm) this.bpm = config.bpm;
-        if (config.pattern) {
-            if (this.pattern !== config.pattern) regenerate = true;
+        if (config.pattern && this.pattern !== config.pattern) {
             this.pattern = config.pattern;
+            rebuildSequence = true;
         }
         if (config.sortMode && this.sortMode !== config.sortMode) {
             this.sortMode = config.sortMode;
-            regenerate = true;
+            rebuildPositions = true;
         }
         if (config.division) this.division = config.division;
         if (config.octaves && config.octaves !== this.octaves) {
             this.octaves = config.octaves;
-            regenerate = true;
+            rebuildSequence = true;
         }
         if (config.waveform) this.waveform = config.waveform;
         if (config.intervals) {
             this.intervals = config.intervals;
-            if (this.sortMode === 'harmonic') regenerate = true;
+            if (this.sortMode === 'harmonic') rebuildPositions = true;
         }
 
-        if (regenerate && this.baseNotes.length > 0) {
-            this.generateNotes();
+        if (rebuildPositions && this.baseNotes.length > 0) {
+            this.buildPositionVector();
+            this.buildSequence();
+        } else if (rebuildSequence && this.sortedNotes.length > 0) {
+            this.buildSequence();
         }
     }
 
-    private getHarmonicRank(note: number): number {
-        // Try exact MIDI match first, then Pitch Class match
-        let type = this.intervals.get(note);
-        if (!type) type = this.intervals.get(note % 12);
+    /**
+     * Sorts notes and assigns progressive IDs (0, 1, 2, ...) to create a positionVector.
+     * The positionVector enables mathematical operations on note positions.
+     */
+    private buildPositionVector() {
+        const uniqueNotes = [...new Set(this.baseNotes)];
 
-        if (!type) return 99; // Unknown/Non-chord tone last
+        if (this.sortMode === 'harmonic') {
+            // Sort by harmonic function from analysis
+            uniqueNotes.sort((a, b) => {
+                const typeA = this.intervals.get(a) || this.intervals.get(a % 12) || 'ext';
+                const typeB = this.intervals.get(b) || this.intervals.get(b % 12) || 'ext';
+                const orderA = ArpeggiatorEngine.HARMONIC_ORDER[typeA] ?? 12;
+                const orderB = ArpeggiatorEngine.HARMONIC_ORDER[typeB] ?? 12;
 
-        if (type === 'root') return 0;
-        if (type.includes('3') || type === 'sus4' || type === '4') return 1; // 3rds and Sus4
-        if (type.includes('5') || type === '5') return 2; // 5ths
-        if (type.includes('7') || type === '6') return 3; // 7ths and 6ths
-        return 4; // Extensions (2, 9, 11, 13)
+                if (orderA !== orderB) return orderA - orderB;
+                return a - b; // Secondary: pitch
+            });
+        } else {
+            // Pitch sort
+            uniqueNotes.sort((a, b) => a - b);
+        }
+
+        this.sortedNotes = uniqueNotes;
+
+        // Create position vector with progressive IDs [0, 1, 2, ...]
+        // modulo = span = length of notes (so element(i) cycles through IDs)
+        const ids = Array.from({ length: uniqueNotes.length }, (_, i) => i);
+        this.notePositions = new positionVector(ids, uniqueNotes.length, uniqueNotes.length);
     }
 
-    private generateNotes() {
-        if (this.baseNotes.length === 0) {
+    /**
+     * Builds the final note sequence for playback using the positionVector.
+     * Uses positionVector.element() for cyclic octave expansion.
+     */
+    private buildSequence() {
+        if (!this.notePositions || this.sortedNotes.length === 0) {
             this.notes = [];
             return;
         }
 
-        const uniqueNotes = [...new Set(this.baseNotes)];
+        // Use positionVector.element() for cyclic access with octave expansion
+        const totalNotes = this.sortedNotes.length * this.octaves;
+        const expanded: number[] = [];
 
-        if (this.sortMode === 'harmonic') {
-            uniqueNotes.sort((a, b) => {
-                const rankA = this.getHarmonicRank(a);
-                const rankB = this.getHarmonicRank(b);
-
-                // Primary sort: Harmonic Function Rank
-                if (rankA !== rankB) return rankA - rankB;
-
-                // Secondary sort: Pitch (Low to High)
-                return a - b;
-            });
-        } else {
-            // Default: Pitch ascending
-            uniqueNotes.sort((a, b) => a - b);
+        for (let i = 0; i < totalNotes; i++) {
+            const positionId = this.notePositions.element(i);
+            const baseNote = this.sortedNotes[positionId % this.sortedNotes.length];
+            const octaveOffset = Math.floor(positionId / this.sortedNotes.length) * 12;
+            expanded.push(baseNote + octaveOffset);
         }
 
-        let expanded: number[] = [];
-        for (let i = 0; i < this.octaves; i++) {
-            expanded.push(...uniqueNotes.map(n => n + (i * 12)));
-        }
         this.notes = expanded;
-
-        if (this.pattern === 'down') {
-            this.notes.reverse();
-        }
+        // Pattern direction is handled in advanceNote()
     }
 
     public start(notes: number[]) {
@@ -105,7 +135,8 @@ export class ArpeggiatorEngine {
         }
 
         this.baseNotes = [...notes];
-        this.generateNotes();
+        this.buildPositionVector();
+        this.buildSequence();
 
         if (this.active) return; // Already running
 
@@ -117,7 +148,8 @@ export class ArpeggiatorEngine {
 
     public updateNotes(notes: number[]) {
         this.baseNotes = [...notes];
-        this.generateNotes();
+        this.buildPositionVector();
+        this.buildSequence();
 
         if (this.baseNotes.length === 0 && this.active) {
             this.stop();

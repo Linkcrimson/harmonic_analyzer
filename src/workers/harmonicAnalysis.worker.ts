@@ -21,8 +21,8 @@ export interface AnalysisResponse {
         stability: string;
         function: string;
         extensions: string[];
-        intervals: Map<number, string>;
-        noteNames: Map<number, string>;
+        intervals: Array<[number, string]>;
+        noteNames: Array<[number, string]>;
         flags: {
             isRootActive: boolean;
             isThirdActive: boolean;
@@ -139,6 +139,17 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
         else if (seventhQuality === "Min 7") mapInterval([10], 'seventh');
         else if (seventhQuality === "Sesta/Dim") mapInterval([9], 'seventh');
 
+        // Map extensions to their specific types
+        // 2nd/9th family (intervals 1, 2)
+        mapInterval([1], 'b9');
+        mapInterval([2], '9');
+        // 4th/11th family (intervals 5, 6)  
+        mapInterval([5], '11');
+        mapInterval([6], '#11');
+        // 6th/13th family (intervals 8, 9)
+        mapInterval([8], 'b13');
+        mapInterval([9], '13');  // Note: may override seventh if Sesta/Dim, that's ok
+
         const intervalValues = Array.from(newIntervals.values());
 
         const response = {
@@ -149,8 +160,8 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
                 stability: detailedAnalysis.fifthQuality,
                 function: detailedAnalysis.seventhQuality,
                 extensions: detailedAnalysis.extensions,
-                intervals: newIntervals,
-                noteNames: newNoteNames,
+                intervals: Array.from(newIntervals),
+                noteNames: Array.from(newNoteNames),
                 flags: {
                     isRootActive: intervalValues.includes('root'),
                     isThirdActive: intervalValues.includes('third'),
@@ -173,8 +184,8 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
                 stability: '--',
                 function: '--',
                 extensions: [],
-                intervals: fallbackIntervals,
-                noteNames: newNoteNames,
+                intervals: Array.from(fallbackIntervals),
+                noteNames: Array.from(newNoteNames),
                 flags: {
                     isRootActive: false,
                     isThirdActive: false,
