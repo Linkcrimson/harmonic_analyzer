@@ -11,7 +11,13 @@ export class ArpeggiatorEngine {
     private sortMode: ArpSortMode = 'pitch';
     private division: number = 1 / 8; // 8th notes
     private octaves: number = 1;
+
+    private onNotePlay: ((note: number) => void) | null = null;
+
+
     private intervals: Map<number, string> = new Map();
+    private harmonicOrderMap: Record<string, number> = {};
+    private splitDoublings: boolean = false;
     private active: boolean = false;
 
     // Core data structures
@@ -27,20 +33,40 @@ export class ArpeggiatorEngine {
 
     private waveform: OscillatorType = 'sine';
 
-    // Harmonic function order for sorting (lower = first)
-    // Order: Root -> 2nd/9th -> 3rd -> 4th/11th -> 5th -> 6th/13th -> 7th
-    private static readonly HARMONIC_ORDER: Record<string, number> = {
-        'root': 0,
-        'b9': 1, '9': 2, '#9': 3,
-        'third': 4,
-        '11': 5, '#11': 6,
-        'fifth': 7,
-        'b13': 8, '13': 9, '#13': 10,
-        'seventh': 11,
-        'ext': 12
-    };
+    private updateHarmonicOrderMap(order: string[]) {
+        this.harmonicOrderMap = {};
+        order.forEach((label, index) => {
+            // Map the label directly to an index.
+            // The mapping from 'interval' to 'label' happens during sort.
+            this.harmonicOrderMap[label] = index;
+        });
+    }
 
-    public setConfig(config: { bpm?: number, pattern?: ArpPattern, sortMode?: ArpSortMode, division?: number, octaves?: number, waveform?: OscillatorType, intervals?: Map<number, string> }) {
+    private getHarmonicCategory(intervalName: string): string {
+        // Map raw interval names (e.g. 'b9', '#11') to user categories
+        if (!intervalName) return 'root';
+        if (intervalName === 'root' || intervalName === 'R') return 'root';
+        if (['3', 'b3', 'bb3', 'sus2', 'sus4', 'third'].includes(intervalName)) return '3rd'; // Treat sus as 3rd type for sorting
+        if (['5', 'b5', '#5', 'dim5', 'aug5', 'fifth'].includes(intervalName)) return '5th';
+        if (['7', 'b7', 'bb7', 'maj7', 'seventh'].includes(intervalName)) return '7th';
+        if (['9', 'b9', '#9'].includes(intervalName)) return '9th';
+        if (['11', '#11'].includes(intervalName)) return '11th';
+        if (['13', 'b13'].includes(intervalName)) return '13th';
+        return 'root'; // Fallback
+    }
+
+    public setConfig(config: {
+        bpm?: number,
+        pattern?: ArpPattern,
+        sortMode?: ArpSortMode,
+        division?: number,
+        octaves?: number,
+        waveform?: OscillatorType,
+        intervals?: Map<number, string>,
+        harmonicOrder?: string[],
+        splitDoublings?: boolean,
+        onNotePlay?: (note: number) => void
+    }) {
         let rebuildPositions = false;
         let rebuildSequence = false;
 
@@ -63,6 +89,17 @@ export class ArpeggiatorEngine {
             this.intervals = config.intervals;
             if (this.sortMode === 'harmonic') rebuildPositions = true;
         }
+        if (config.harmonicOrder) {
+            this.updateHarmonicOrderMap(config.harmonicOrder);
+            if (this.sortMode === 'harmonic') rebuildPositions = true;
+        }
+        if (config.splitDoublings !== undefined && this.splitDoublings !== config.splitDoublings) {
+            this.splitDoublings = config.splitDoublings;
+            if (this.sortMode === 'harmonic') rebuildPositions = true;
+        }
+        if (config.onNotePlay) {
+            this.onNotePlay = config.onNotePlay;
+        }
 
         if (rebuildPositions && this.baseNotes.length > 0) {
             this.buildPositionVector();
@@ -82,14 +119,66 @@ export class ArpeggiatorEngine {
         if (this.sortMode === 'harmonic') {
             // Sort by harmonic function from analysis
             uniqueNotes.sort((a, b) => {
-                const typeA = this.intervals.get(a) || this.intervals.get(a % 12) || 'ext';
-                const typeB = this.intervals.get(b) || this.intervals.get(b % 12) || 'ext';
-                const orderA = ArpeggiatorEngine.HARMONIC_ORDER[typeA] ?? 12;
-                const orderB = ArpeggiatorEngine.HARMONIC_ORDER[typeB] ?? 12;
+                const typeA = this.intervals.get(a) || this.intervals.get(a % 12) || 'root';
+                const typeB = this.intervals.get(b) || this.intervals.get(b % 12) || 'root';
+
+                const catA = this.getHarmonicCategory(typeA);
+                const catB = this.getHarmonicCategory(typeB);
+
+                const orderA = this.harmonicOrderMap[catA] ?? 999;
+                const orderB = this.harmonicOrderMap[catB] ?? 999;
 
                 if (orderA !== orderB) return orderA - orderB;
                 return a - b; // Secondary: pitch
             });
+
+            if (this.splitDoublings) {
+                // Logic: Keep first occurrence of each category in 'sequence', move others to 'doublings'
+                // But wait, 'uniqueNotes' above has already uniqued by MIDI Pitch!
+                // Ah, 'split doublings' usually means if I hold C3 and C4, they are both roots.
+                // My baseNotes are MIDI numbers. 
+                // So if I have C3, E3, G3, C4.
+                // C3 is Root, E3 is 3rd, G3 is 5th, C4 is Root.
+                // Standard sort puts C3, C4, E3, G3 (assuming Root < 3rd).
+                // Split Doublings should put C3, E3, G3 ... then C4.
+
+                // Refetch all base notes (duplicates allowed if input allowed them, but baseNotes is just numbers)
+                // Actually my start(notes) takes a set turned to array, so unique by definition.
+                // BUT, they can be octave duplicates.
+
+                // So:
+                const primary: number[] = [];
+                const secondary: number[] = [];
+                const seenCategories = new Set<string>();
+
+                // We need to iterate the sorted uniqueNotes and check their categories
+                // Note: uniqueNotes is already sorted by Harmonic Category above.
+                // So all Roots are together, all 3rds together.
+                // e.g. [C3, C4, E3, G3] -> sorted: [C3(Root), C4(Root), E3(3rd), G3(5th)]
+
+                for (const note of uniqueNotes) {
+                    const type = this.intervals.get(note) || this.intervals.get(note % 12) || 'root';
+                    const cat = this.getHarmonicCategory(type);
+                    if (!seenCategories.has(cat)) {
+                        primary.push(note);
+                        seenCategories.add(cat);
+                    } else {
+                        secondary.push(note);
+                    }
+                }
+                // Concat: Primary then Secondary
+                // Note: uniqueNotes is a reference to a local array here, so we can reassign it logic-wise or just use the result
+                // But sortedNotes is a class property.
+                // Wait, the method is modifying 'uniqueNotes' array, then assigning to sortedNotes.
+
+                // Let's do this:
+                this.sortedNotes = [...primary, ...secondary];
+
+                // Recalculate IDs for position vector
+                const ids = Array.from({ length: this.sortedNotes.length }, (_, i) => i);
+                this.notePositions = new positionVector(ids, this.sortedNotes.length, this.sortedNotes.length);
+                return; // Early return as we handled it
+            }
         } else {
             // Pitch sort
             uniqueNotes.sort((a, b) => a - b);
@@ -195,6 +284,16 @@ export class ArpeggiatorEngine {
         // Single shot NoteOn/NoteOff at 'time'
         audioEngine.noteOn(noteId, freq, this.waveform, 0.4, time);
         audioEngine.noteOff(noteId, time + duration);
+
+        // Notify callback if time is "now" (close enough)
+        // Since we schedule ahead 100ms, we might want to delay the visual update or just fire it.
+        // For visual feedback, firing slightly early (ms) is usually fine, or set a timeout.
+        const delay = (time - audioEngine.currentTime) * 1000;
+        if (delay > 0) {
+            setTimeout(() => this.onNotePlay?.(noteId), delay);
+        } else {
+            this.onNotePlay?.(noteId);
+        }
     }
 
     private advanceNote() {

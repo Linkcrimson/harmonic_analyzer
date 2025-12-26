@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import it from '../locales/it.json';
 import en from '../locales/en.json';
+import { TOOLTIPS_IT } from '../locales/tooltips_it';
+import { TOOLTIPS_EN } from '../locales/tooltips_en';
 
 // --- Costanti per Scalabilità ---
 export const SUPPORTED_LANGUAGES = {
@@ -12,8 +14,8 @@ export type LanguageCode = keyof typeof SUPPORTED_LANGUAGES;
 
 // Mappa delle traduzioni
 const translations: Record<LanguageCode, any> = {
-    it,
-    en
+    it: { ...it, ...TOOLTIPS_IT },
+    en: { ...en, ...TOOLTIPS_EN }
 };
 
 // --- Context Definition ---

@@ -38,6 +38,7 @@ interface HarmonicState {
     toggleNote: (noteId: number) => void;
     setWaveform: (type: OscillatorType) => void;
     playCurrentChord: () => void;
+    togglePlayback: () => void;
     reset: () => void;
     selectChordOption: (index: number) => void;
     midiConnected: boolean;
@@ -60,6 +61,10 @@ interface HarmonicState {
     setArpPattern: (pattern: ArpPattern) => void;
     arpSortMode: ArpSortMode;
     setArpSortMode: (mode: ArpSortMode) => void;
+    arpHarmonicOrder: string[];
+    setArpHarmonicOrder: (order: string[]) => void;
+    arpSplitDoublings: boolean;
+    setArpSplitDoublings: (split: boolean) => void;
     arpDivision: number;
     setArpDivision: (div: number) => void;
     arpOctaves: number;
@@ -68,6 +73,7 @@ interface HarmonicState {
     setMasterVolume: (vol: number) => void;
     shortDuration: number;
     setShortDuration: (dur: number) => void;
+    activeArpNote: number | null;
 }
 
 export const HarmonicContext = createContext<HarmonicState | null>(null);
@@ -90,11 +96,26 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [bpm, setBpm] = useState(120);
     const [arpPattern, setArpPattern] = useState<ArpPattern>('up');
     const [arpSortMode, setArpSortMode] = useState<ArpSortMode>('pitch');
+    // Default order requested: Root, 9, 3, 11, 5, 13, 7
+    const [arpHarmonicOrder, setArpHarmonicOrder] = useState<string[]>(['root', '9th', '3rd', '11th', '5th', '13th', '7th']);
+
+    // Safety check to ensure all categories are present (e.g. if state was stale)
+    useEffect(() => {
+        const fullList = ['root', '9th', '3rd', '11th', '5th', '13th', '7th'];
+        if (arpHarmonicOrder.length < fullList.length) {
+            const missing = fullList.filter(item => !arpHarmonicOrder.includes(item));
+            if (missing.length > 0) {
+                setArpHarmonicOrder(prev => [...prev, ...missing]);
+            }
+        }
+    }, [arpHarmonicOrder]);
+    const [arpSplitDoublings, setArpSplitDoublings] = useState(false);
     const [arpDivision, setArpDivision] = useState(1 / 8);
     const [arpOctaves, setArpOctaves] = useState(1);
     const [masterVolume, setMasterVolumeState] = useState(0.5);
     const [shortDuration, setShortDuration] = useState(0.3);
     const [isManuallyStopped, setIsManuallyStopped] = useState(false);
+    const [activeArpNote, setActiveArpNote] = useState<number | null>(null);
     const inputStartTimes = useRef<Map<number, number>>(new Map());
     const repeatIntervalRef = useRef<number | null>(null);
     const { settings: notationSettings } = useNotation();
@@ -322,12 +343,12 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (audioMode === 'repeat' && activeNotes.size > 0) {
             repeatIntervalRef.current = window.setInterval(() => {
                 playChordNotes(activeNotes);
-            }, 2000);
+            }, (60000 / bpm) * 4); // 4 beats per bar match for loop feel
         }
         return () => {
             if (repeatIntervalRef.current) clearInterval(repeatIntervalRef.current);
         };
-    }, [audioMode, activeNotes, playChordNotes]);
+    }, [audioMode, activeNotes, playChordNotes, bpm]);
 
     useEffect(() => {
         if (activeNotes.size === 0) {
@@ -361,9 +382,17 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             division: arpDivision,
             octaves: arpOctaves,
             waveform: currentWaveform,
-            intervals: analysis.intervals
+            intervals: analysis.intervals,
+            harmonicOrder: arpHarmonicOrder,
+            splitDoublings: arpSplitDoublings,
+            onNotePlay: (note) => {
+                setActiveArpNote(note);
+                // Auto-clear after a short duration to create a flash effect
+                // Duration matches 80% of step time approx, or fixed 100ms
+                setTimeout(() => setActiveArpNote(null), 150);
+            }
         });
-    }, [bpm, arpPattern, arpSortMode, arpDivision, arpOctaves, currentWaveform, analysis.intervals]);
+    }, [bpm, arpPattern, arpSortMode, arpDivision, arpOctaves, currentWaveform, analysis.intervals, arpHarmonicOrder, arpSplitDoublings]);
 
     // Synchronize Arp notes when activeNotes changes
     useEffect(() => {
@@ -403,6 +432,10 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         activeNotes.forEach(noteId => audioEngine.noteOff(noteId));
         arpEngine.stop();
         setActiveNotes(new Set());
+        setSelectedOptionIndex(0);
+        setIsManuallyStopped(false);
+        setActiveNotes(new Set());
+        setActiveArpNote(null);
         setSelectedOptionIndex(0);
         setIsManuallyStopped(false);
     }, [activeNotes]);
@@ -485,6 +518,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             toggleNote,
             setWaveform,
             playCurrentChord,
+            togglePlayback,
             reset,
             selectChordOption,
             midiConnected,
@@ -507,6 +541,10 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             setArpPattern,
             arpSortMode,
             setArpSortMode,
+            arpHarmonicOrder,
+            setArpHarmonicOrder,
+            arpSplitDoublings,
+            setArpSplitDoublings,
             arpDivision,
             setArpDivision,
             arpOctaves,
@@ -514,7 +552,8 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             masterVolume,
             setMasterVolume,
             shortDuration,
-            setShortDuration
+            setShortDuration,
+            activeArpNote
         }}>
             {children}
         </HarmonicContext.Provider>

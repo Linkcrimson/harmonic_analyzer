@@ -205,5 +205,26 @@ export const TOOLTIPS_EN = {
         continuous: "Continuous",
         repeat: "Repeat",
         arpeggio: "Arpeggio"
+    },
+
+    // GENERAL TOOLTIPS
+    tooltips: {
+        sortModeTitle: "Sorting Mode",
+        sortModeContent: "Pitch: Notes are played in ascending order (low to high).\n\nHarmonic: Notes are grouped by function (e.g., all Roots first, then 3rds...).\n\nYou can prioritize functions by dragging the items in the list below.",
+        splitDoublings: "Split Doublings",
+        splitDoublingsContent: "If enabled, the arpeggiator first plays all unique functions (e.g., C3, E3, G3) and only then plays the octave doublings (e.g., C4).\n\nUseful for clearly hearing the chord structure before its expansions.",
+        resetOrder: "Reset Order",
+        randomizeOrder: "Randomize Order"
+    },
+
+    // HARMONIC FUNCTION LABELS
+    harmonic_functions: {
+        root: "Root",
+        "3rd": "3rd / Sus",
+        "5th": "5th",
+        "7th": "7th",
+        "9th": "9th",
+        "11th": "11th",
+        "13th": "13th"
     }
 };

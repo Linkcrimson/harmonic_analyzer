@@ -205,5 +205,26 @@ export const TOOLTIPS_IT = {
         continuous: "Continuo",
         repeat: "Ripetuto",
         arpeggio: "Arpeggio"
+    },
+
+    // GENERAL TOOLTIPS
+    tooltips: {
+        sortModeTitle: "Modalità Ordinamento",
+        sortModeContent: "Pitch: Le note seguono l'ordine di altezza (dal basso all'alto).\n\nHarmonic: Le note vengono raggruppate per funzione (es. tutte le Fondamentali, poi le Terze...). \n\nPuoi modificare la priorità trascinando le voci nella lista.",
+        splitDoublings: "Separa Raddoppi",
+        splitDoublingsContent: "Se attivo, l'arpeggiatore suona prima tutte le funzioni 'uniche' (es. Do3, Mi3, Sol3) e solo dopo i raddoppi all'ottava (es. Do4).\n\nUtile per sentire chiaramente la struttura dell'accordo prima delle espansioni.",
+        resetOrder: "Reimposta Ordine",
+        randomizeOrder: "Ordine Casuale"
+    },
+
+    // HARMONIC FUNCTION LABELS
+    harmonic_functions: {
+        root: "Fondamentale",
+        "3rd": "Terza / Sus",
+        "5th": "Quinta",
+        "7th": "Settima",
+        "9th": "Nona",
+        "11th": "Undicesima",
+        "13th": "Tredicesima"
     }
 };
