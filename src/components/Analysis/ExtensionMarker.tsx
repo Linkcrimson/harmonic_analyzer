@@ -33,7 +33,7 @@ export const ExtensionMarker: React.FC<ExtensionMarkerProps> = ({
     onClick
 }) => {
     const { language, t } = useLanguage();
-    const didactic = getDidacticExplanation(idx, contextIntervals, language);
+    const didactic = getDidacticExplanation(idx, contextIntervals, language, note.type);
 
     const content = (
         <div>

@@ -32,7 +32,7 @@ export const NoteMarker: React.FC<NoteMarkerProps> = ({
     onClick
 }) => {
     const { language, t } = useLanguage();
-    const didactic = getDidacticExplanation(note.idx, contextIntervals, language);
+    const didactic = getDidacticExplanation(note.idx, contextIntervals, language, note.type);
 
     const content = (
         <div>

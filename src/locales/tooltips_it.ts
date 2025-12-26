@@ -119,11 +119,27 @@ export const TOOLTIPS_IT = {
         description: "L'estensione più alta. Comprende tutte le note precedenti. Su un accordo di dominante, la 13 naturale (senza alterazioni) crea un suono sofisticato e 'pianistico'."
     },
     dim7: {
+        title: "Sesta / Settima Diminuita",
+        description: "Intervallo enarmonico: sesta maggiore e settima diminuita (bb7) sono lo stesso tasto. In accordi come C6 o Cm6, la sesta prende la funzione della settima ma resta una CONSONANZA (suono stabile, caldo, Dorico). In accordi diminuiti (°7), è una dissonanza che definisce la struttura simmetrica. A differenza di m7 e Maj7 (dissonanze), la sesta non crea tensione da risolvere."
+    },
+    dim7_true: {
         title: "Settima Diminuita (bb7)",
-        description: "Enarmonicamente una Sesta Maggiore. È la nota che definisce l'accordo Diminuito 7 (sostanzialmente un accordo di dominante b9 senza radice). Simmetrica e instabile."
+        description: "In un accordo diminuito (°7), questa nota definisce la struttura simmetrica. L'accordo dim7 divide l'ottava in quattro parti uguali, creando instabilità e ambiguità tonale. Funziona come dominante senza fondamentale (b9 implicita). Suono drammatico e misterioso."
+    },
+    sixth_min: {
+        title: "Sesta (in accordo minore)",
+        description: "Il sistema cerca una settima e la trova in questa settima diminuita, enarmonica alla sesta maggiore. In un accordo minore con sesta (es. Cm6), questa nota è una consonanza che aggiunge calore Dorico. Non crea tensione da risolvere come le settime. Suono tipico di Santana, jazz modale, e atmosfere 'soul'."
+    },
+    sixth_maj: {
+        title: "Sesta (in accordo maggiore)",
+        description: "Il sistema cerca una settima e la trova in questa settima diminuita, enarmonica alla sesta maggiore. In un accordo maggiore con sesta (es. C6), questa nota è una consonanza che conferisce un colore pastorale e rassicurante. Non crea tensione da risolvere. Tipica del jazz classico, swing e 'easy listening'."
     },
 
-    // INTERVAL 10: b7
+    // INTERVAL 10: b7 / #13
+    sharp13: {
+        title: "Tredicesima Aumentata (#13)",
+        description: "Quando la Settima Maggiore è già presente, questo intervallo (enarmonico della Settima Minore) assume la funzione di Tredicesima Aumentata. Crea un colore molto sofisticato e moderno, tipico del jazz contemporaneo."
+    },
     min7_dom: {
         title: "Settima Minore (b7)",
         description: "Nota 'guida' fondamentale. Insieme alla 3a maggiore forma il Tritono, il 'motore' che fa muovere la musica tonale verso la risoluzione. Definisce la funzione di Dominante."
@@ -151,6 +167,36 @@ export const TOOLTIPS_IT = {
     unknown: {
         title: "Intervallo",
         description: "Analisi complessa o cromatica - Da definire il ruolo specifico in questo voicing."
+    },
+
+    // ADD EXTENSIONS (no seventh present)
+    addb9: {
+        title: "Nona Minore Aggiunta (add b9)",
+        description: "Nona minore aggiunta a una triade (senza settima). Crea una tensione molto intensa e un colore oscuro, tipico di sonorità cinematografiche o drammatiche."
+    },
+    addsharp9: {
+        title: "Nona Aumentata Aggiunta (add #9)",
+        description: "Nona aumentata aggiunta a una triade (senza settima). Crea un effetto 'blues' anche senza la settima dominante. Raro ma suggestivo."
+    },
+    add11: {
+        title: "Undicesima Aggiunta (add11)",
+        description: "Undicesima aggiunta a una triade (senza settima). Crea un suono aperto e sospeso, simile a un sus4 ma con la terza presente. Tipico del rock e del pop."
+    },
+    addsharp11: {
+        title: "Undicesima Aumentata Aggiunta (add #11)",
+        description: "Undicesima aumentata aggiunta a una triade (senza settima). Evoca il modo Lidio anche senza la settima. Suono brillante e 'spaziale'."
+    },
+    addb13: {
+        title: "Tredicesima Minore Aggiunta (add b13)",
+        description: "Tredicesima minore aggiunta a una triade (senza settima). Crea una tensione dolce-amara tipica del minore armonico."
+    },
+    add13: {
+        title: "Tredicesima Aggiunta (add13)",
+        description: "Tredicesima aggiunta a una triade (senza settima). Equivale a un accordo di sesta, ma con una diversa implicazione funzionale. Suono dolce e nostalgico."
+    },
+    addsharp13: {
+        title: "Tredicesima Aumentata Aggiunta (add #13)",
+        description: "Tredicesima aumentata aggiunta a una triade (senza settima). Molto raro, crea un colore moderno e sofisticato."
     },
 
     // AUDIO MODES
