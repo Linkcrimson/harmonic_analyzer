@@ -39,7 +39,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ info, forcePosition, variant =
                             <span>{info.title}</span>
                             <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
                         </div>
-                        <div className="leading-relaxed text-sm text-gray-300">
+                        <div className="leading-relaxed text-sm text-gray-300 whitespace-pre-line">
                             {info.content}
                         </div>
                     </div>
@@ -89,7 +89,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ info, forcePosition, variant =
             <div className="font-bold text-[#e0e0e0] mb-2 uppercase tracking-wider text-xs border-b border-[#333] pb-1">
                 {info.title}
             </div>
-            <div className="leading-relaxed text-xs">
+            <div className="leading-relaxed text-xs whitespace-pre-line">
                 {info.content}
             </div>
             <div
