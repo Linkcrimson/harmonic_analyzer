@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { useHarmonic } from '../../context/HarmonicContext';
+import { getIntervalColor } from '../../utils/intervalColors';
 
 interface KeyboardMinimapProps {
     scrollContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -15,16 +16,13 @@ const BLACK_KEY_HEIGHT_PERCENT = 60;
 const RADIUS_X = 1.0;
 const RADIUS_Y = 6.0;
 
-// Function to map interval to CSS variable or color
-const getIntervalColor = (interval?: string) => {
-    switch (interval) {
-        case 'root': return 'var(--col-root)';
-        case 'third': return 'var(--col-third)';
-        case 'fifth': return 'var(--col-fifth)';
-        case 'seventh': return 'var(--col-seventh)';
-        case 'ext': return 'var(--col-ext)';
-        default: return '#3b82f6'; // Fallback blue
-    }
+// Fallback color for minimap when interval color is default
+const MINIMAP_FALLBACK_COLOR = '#3b82f6';
+
+// Wrapper to use shared color logic with minimap-specific fallback
+const getMinimapColor = (interval?: string) => {
+    const color = getIntervalColor(interval);
+    return color === '#333' ? MINIMAP_FALLBACK_COLOR : color;
 };
 
 export const KeyboardMinimap: React.FC<KeyboardMinimapProps> = ({ scrollContainerRef }) => {
@@ -243,7 +241,7 @@ export const KeyboardMinimap: React.FC<KeyboardMinimapProps> = ({ scrollContaine
 
             const gridIdx = getGridIndex(noteId);
             const black = isBlack(noteId);
-            const color = getIntervalColor(analysis.intervals.get(noteId));
+            const color = getMinimapColor(analysis.intervals.get(noteId));
 
             if (black) {
                 const lineIdx = gridIdx + 1;

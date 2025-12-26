@@ -119,11 +119,27 @@ export const TOOLTIPS_EN = {
         description: "The highest extension. Includes all previous notes. On a dominant chord, the natural 13 (without alterations) creates a sophisticated and 'pianistic' sound."
     },
     dim7: {
+        title: "Sixth / Diminished Seventh",
+        description: "Enharmonic interval: major sixth and diminished seventh (bb7) are the same key. In chords like C6 or Cm6, the sixth takes on the function of the seventh but remains a CONSONANCE (stable, warm, Dorian sound). In diminished chords (°7), it's a dissonance defining the symmetric structure. Unlike m7 and Maj7 (dissonances), the sixth creates no tension to resolve."
+    },
+    dim7_true: {
         title: "Diminished Seventh (bb7)",
-        description: "Enharmonically a Major Sixth. It is the note that defines the Diminished 7th chord (essentially a rootless dominant b9). Symmetric and unstable."
+        description: "In a diminished chord (°7), this note defines the symmetric structure. The dim7 chord divides the octave into four equal parts, creating instability and tonal ambiguity. Functions as a rootless dominant (implied b9). Dramatic and mysterious sound."
+    },
+    sixth_min: {
+        title: "Sixth (in minor chord)",
+        description: "The system searches for a seventh and finds it in this diminished seventh, enharmonic to the major sixth. In a minor sixth chord (e.g., Cm6), this note is a consonance that adds Dorian warmth. It doesn't create tension to resolve like sevenths. Typical of Santana, modal jazz, and 'soul' atmospheres."
+    },
+    sixth_maj: {
+        title: "Sixth (in major chord)",
+        description: "The system searches for a seventh and finds it in this diminished seventh, enharmonic to the major sixth. In a major sixth chord (e.g., C6), this note is a consonance that gives a pastoral and reassuring color. It doesn't create tension to resolve. Typical of classic jazz, swing, and 'easy listening'."
     },
 
-    // INTERVAL 10: b7
+    // INTERVAL 10: b7 / #13
+    sharp13: {
+        title: "Augmented Thirteenth (#13)",
+        description: "When the Major Seventh is already present, this interval (enharmonic to the minor seventh) takes on the function of Augmented Thirteenth. Creates a very sophisticated and modern color, typical of contemporary jazz."
+    },
     min7_dom: {
         title: "Minor Seventh (b7)",
         description: "Fundamental 'guide' note. Together with the major 3rd it forms the Tritone, the 'engine' that moves tonal music towards resolution. Defines the Dominant function."
@@ -151,6 +167,36 @@ export const TOOLTIPS_EN = {
     unknown: {
         title: "Interval",
         description: "Complex or chromatic analysis - Specific role to be defined in this voicing."
+    },
+
+    // ADD EXTENSIONS (no seventh present)
+    addb9: {
+        title: "Added Minor Ninth (add b9)",
+        description: "Minor ninth added to a triad (no seventh). Creates intense tension and a dark color, typical of cinematic or dramatic sounds."
+    },
+    addsharp9: {
+        title: "Added Augmented Ninth (add #9)",
+        description: "Augmented ninth added to a triad (no seventh). Creates a 'blues' effect even without the dominant seventh. Rare but evocative."
+    },
+    add11: {
+        title: "Added Eleventh (add11)",
+        description: "Eleventh added to a triad (no seventh). Creates an open, suspended sound, similar to sus4 but with the third present. Typical of rock and pop."
+    },
+    addsharp11: {
+        title: "Added Augmented Eleventh (add #11)",
+        description: "Augmented eleventh added to a triad (no seventh). Evokes the Lydian mode even without the seventh. Bright and 'spacey' sound."
+    },
+    addb13: {
+        title: "Added Minor Thirteenth (add b13)",
+        description: "Minor thirteenth added to a triad (no seventh). Creates a bittersweet tension typical of the harmonic minor scale."
+    },
+    add13: {
+        title: "Added Thirteenth (add13)",
+        description: "Thirteenth added to a triad (no seventh). Equivalent to a sixth chord, but with a different functional implication. Sweet and nostalgic sound."
+    },
+    addsharp13: {
+        title: "Added Augmented Thirteenth (add #13)",
+        description: "Augmented thirteenth added to a triad (no seventh). Very rare, creates a modern and sophisticated color."
     },
 
     // AUDIO MODES

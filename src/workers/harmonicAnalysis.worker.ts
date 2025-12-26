@@ -139,16 +139,28 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
         else if (seventhQuality === "Min 7") mapInterval([10], 'seventh');
         else if (seventhQuality === "Sesta/Dim") mapInterval([9], 'seventh');
 
-        // Map extensions to their specific types
-        // 2nd/9th family (intervals 1, 2)
-        mapInterval([1], 'b9');
-        mapInterval([2], '9');
+        // Map extensions ONLY if still marked as 'ext' (prevents overwriting chord tones)
+        const mapExtension = (semitones: number[], type: string) => {
+            sortedNotes.forEach(noteId => {
+                const notePitchClass = modulo(noteId, 12);
+                const interval = modulo(notePitchClass - rootPitchClass, 12);
+                if (semitones.includes(interval) && newIntervals.get(noteId) === 'ext') {
+                    newIntervals.set(noteId, type);
+                }
+            });
+        };
+
+        // 2nd/9th family (intervals 1, 2, 3)
+        mapExtension([1], 'b9');
+        mapExtension([2], '9');
+        mapExtension([3], '#9');
         // 4th/11th family (intervals 5, 6)  
-        mapInterval([5], '11');
-        mapInterval([6], '#11');
-        // 6th/13th family (intervals 8, 9)
-        mapInterval([8], 'b13');
-        mapInterval([9], '13');  // Note: may override seventh if Sesta/Dim, that's ok
+        mapExtension([5], '11');
+        mapExtension([6], '#11');
+        // 6th/13th family (intervals 8, 9, 10)
+        mapExtension([8], 'b13');
+        mapExtension([9], '13');
+        mapExtension([10], '#13');
 
         const intervalValues = Array.from(newIntervals.values());
 

@@ -1,20 +1,16 @@
 import React, { useMemo, memo, useRef, useCallback } from 'react';
 import { useHarmonic, InputMode } from '../../context/HarmonicContext';
 import { useAudioFeedback } from '../../hooks/useAudioFeedback';
+import { getIntervalColor } from '../../utils/intervalColors';
 
-const THEME_COLORS = {
-    root: '--col-root',
-    third: '--col-third',
-    fifth: '--col-fifth',
-    seventh: '--col-seventh',
-    ext: '--col-ext',
-    active: '#3b82f6'
-};
+// Fallback color for active notes without interval type
+const ACTIVE_COLOR = '#3b82f6';
 
-// Helper to get CSS color value
+// Helper to get CSS color value (uses shared interval color logic)
 const getColorValue = (type?: string) => {
-    const color = type && type in THEME_COLORS ? THEME_COLORS[type as keyof typeof THEME_COLORS] : THEME_COLORS.active;
-    return color.startsWith('--') ? `var(${color})` : color;
+    const color = getIntervalColor(type);
+    // If getIntervalColor returns default (#333), use active color for piano keys
+    return color === '#333' ? ACTIVE_COLOR : color;
 };
 
 // Shared overlay renderer

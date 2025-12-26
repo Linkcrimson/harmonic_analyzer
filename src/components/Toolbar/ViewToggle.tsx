@@ -26,15 +26,15 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({
 
     // --- Dynamic Icon Logic ---
 
-    // 1. Cards Icon Colors
+    // 1. Cards Icon Colors - using shared color logic
     const cardsIconColors = useMemo(() => {
         const { flags } = analysis;
         return {
-            root: flags.isRootActive ? 'var(--col-root)' : '#333',
-            quality: flags.isThirdActive ? 'var(--col-third)' : '#333',
-            stability: flags.isFifthActive ? 'var(--col-fifth)' : '#333',
-            func: flags.isSeventhActive ? 'var(--col-seventh)' : '#333',
-            ext: analysis.extensions.length > 0 ? 'var(--col-ext)' : '#333'
+            root: getIntervalColor(flags.isRootActive ? 'root' : undefined),
+            quality: getIntervalColor(flags.isThirdActive ? 'third' : undefined),
+            stability: getIntervalColor(flags.isFifthActive ? 'fifth' : undefined),
+            func: getIntervalColor(flags.isSeventhActive ? 'seventh' : undefined),
+            ext: getIntervalColor(analysis.extensions.length > 0 ? 'ext' : undefined)
         };
     }, [analysis]);
 

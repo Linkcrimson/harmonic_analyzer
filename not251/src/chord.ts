@@ -966,8 +966,11 @@ export function analyzeChord(
       score += 2;
     }
 
-    if (quality.includes("add9") || quality.includes("addb9") || quality.includes("add#9") || quality.includes("add11") || quality.includes("add13") || quality.includes("addb13") || quality.includes("add#13")) {
+    if (quality.includes("add9") || quality.includes("addb9") || quality.includes("add#9") || quality.includes("add11") || quality.includes("add#11") || quality.includes("add13") || quality.includes("addb13") || quality.includes("add#13")) {
       score += 3;
+    }
+    if (quality.includes("#13")) {
+      score += 7;
     }
     // Penalty for sus chords if they are not the primary intent (context dependent, but generally prefer major/minor)
     if (quality.includes("sus2") || quality.includes("sus4")) {
