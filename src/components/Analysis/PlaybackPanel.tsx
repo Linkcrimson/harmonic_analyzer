@@ -75,7 +75,8 @@ export const PlaybackPanel: React.FC = () => {
         setArpSplitDoublings,
         togglePlayback,
         analysis,
-        activeArpNote
+        activeArpNote,
+        isManuallyStopped
     } = useHarmonic();
 
     const { t } = useLanguage();
@@ -83,11 +84,14 @@ export const PlaybackPanel: React.FC = () => {
     const [tooltipInfo, setTooltipInfo] = React.useState<any>(null); // For custom tooltip
 
     // Helper to toggle playback
-
     const handleTogglePlayback = (e: React.MouseEvent) => {
         e.stopPropagation();
         togglePlayback();
     };
+
+    // Show STOP only if there are notes AND it's NOT manually stopped.
+    // If manually stopped, show PLAY (to resume).
+    const isPlaying = activeNotes.size > 0 && !isManuallyStopped;
 
     const patternLabels: Record<string, string> = {
         up: 'Up',
@@ -366,8 +370,10 @@ export const PlaybackPanel: React.FC = () => {
                 {/* Collapsible Drawer - Contains ALL settings */}
                 <div
                     className={`
-                    w-full overflow-hidden transition-all duration-300 ease-in-out bg-[#111] md:bg-transparent
-                    ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}
+                    w-full transition-all duration-300 ease-in-out bg-[#111] md:bg-transparent
+                    ${isExpanded
+                            ? 'max-h-[80vh] md:max-h-[500px] opacity-100 overflow-y-auto md:overflow-visible'
+                            : 'max-h-0 opacity-0 overflow-hidden'}
                 `}
                 >
                     <div className="bg-[#111] border-t md:border border-[#333] md:border-b-0 md:rounded-t-xl px-4 lg:px-6 py-4 flex flex-col gap-4 shadow-xl pb-2 md:pb-4">
@@ -380,14 +386,14 @@ export const PlaybackPanel: React.FC = () => {
                             </div>
                             <div className="flex-1 flex justify-end">
                                 <button
-                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${activeNotes.size > 0
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${isPlaying
                                         ? 'bg-cyan-900/50 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.2)]'
                                         : 'text-gray-500 hover:text-gray-300 hover:bg-[#222]'
                                         }`}
                                     onClick={handleTogglePlayback}
                                     id="playback-toggle-btn"
                                 >
-                                    {activeNotes.size > 0 ? <IconStop /> : <IconPlay />}
+                                    {isPlaying ? <IconStop /> : <IconPlay />}
                                 </button>
                             </div>
                         </div>
