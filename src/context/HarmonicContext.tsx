@@ -16,6 +16,7 @@ export type AudioMode = 'short' | 'continuous' | 'repeat' | 'arpeggio';
 
 interface HarmonicState {
     activeNotes: Set<number>;
+    isManuallyStopped: boolean;
     currentWaveform: OscillatorType;
     chordName: string;
     chordOptions: any[];
@@ -244,18 +245,20 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         } else {
             newSet.add(noteId);
-            if (audioMode === 'short' || audioMode === 'repeat' || audioMode === 'arpeggio') {
-                // Play full chord or start arp
-                playChordNotes(newSet);
-            } else {
-                // Continuous mode
-                audioEngine.noteOn(noteId, audioEngine.getFrequency(noteId), currentWaveform, 0.5);
+            if (!isManuallyStopped) {
+                if (audioMode === 'short' || audioMode === 'repeat' || audioMode === 'arpeggio') {
+                    // Play full chord or start arp
+                    playChordNotes(newSet);
+                } else {
+                    // Continuous mode
+                    audioEngine.noteOn(noteId, audioEngine.getFrequency(noteId), currentWaveform, 0.5);
+                }
             }
         }
-        setIsManuallyStopped(false);
+        // REMOVED: setIsManuallyStopped(false); // Do not auto-resume on toggle
         setActiveNotes(newSet);
         setSelectedOptionIndex(0);
-    }, [activeNotes, lockedNotes, audioMode, playChordNotes, currentWaveform]);
+    }, [activeNotes, lockedNotes, audioMode, playChordNotes, currentWaveform, isManuallyStopped]);
 
     const startInput = useCallback((noteId: number, source: 'ui' | 'midi' = 'ui') => {
         inputStartTimes.current.set(noteId, Date.now());
@@ -269,18 +272,20 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 const newSet = new Set(prev);
                 newSet.add(noteId);
 
-                if (audioMode === 'short' || audioMode === 'repeat' || audioMode === 'arpeggio') {
-                    // Play full chord or start arp
-                    playChordNotes(newSet);
-                } else {
-                    audioEngine.noteOn(noteId, audioEngine.getFrequency(noteId), currentWaveform, 0.5);
+                if (!isManuallyStopped) {
+                    if (audioMode === 'short' || audioMode === 'repeat' || audioMode === 'arpeggio') {
+                        // Play full chord or start arp
+                        playChordNotes(newSet);
+                    } else {
+                        audioEngine.noteOn(noteId, audioEngine.getFrequency(noteId), currentWaveform, 0.5);
+                    }
                 }
 
                 return newSet;
             });
         }
-        setIsManuallyStopped(false);
-    }, [inputMode, audioMode, toggleNote, currentWaveform, playChordNotes]);
+        // REMOVED: setIsManuallyStopped(false); // Do not auto-resume
+    }, [inputMode, audioMode, toggleNote, currentWaveform, playChordNotes, isManuallyStopped]);
 
     const stopInput = useCallback((noteId: number, source: 'ui' | 'midi' = 'ui') => {
         const startTime = inputStartTimes.current.get(noteId) || 0;
@@ -340,7 +345,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, [inputMode, audioMode, lockedNotes]);
 
     useEffect(() => {
-        if (audioMode === 'repeat' && activeNotes.size > 0) {
+        if (audioMode === 'repeat' && activeNotes.size > 0 && !isManuallyStopped) {
             repeatIntervalRef.current = window.setInterval(() => {
                 playChordNotes(activeNotes);
             }, (60000 / bpm) * 4); // 4 beats per bar match for loop feel
@@ -348,7 +353,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return () => {
             if (repeatIntervalRef.current) clearInterval(repeatIntervalRef.current);
         };
-    }, [audioMode, activeNotes, playChordNotes, bpm]);
+    }, [audioMode, activeNotes, playChordNotes, bpm, isManuallyStopped]);
 
     useEffect(() => {
         if (activeNotes.size === 0) {
@@ -507,6 +512,7 @@ export const HarmonicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return (
         <HarmonicContext.Provider value={{
             activeNotes,
+            isManuallyStopped,
             currentWaveform,
             chordName: formatChordName(chordOptions[selectedOptionIndex]?.chordName || '--', notationSettings),
             chordOptions: chordOptions.map(opt => ({
