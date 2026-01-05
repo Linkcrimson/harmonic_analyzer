@@ -1,6 +1,6 @@
 {
   "name": "harmonic_analyzer",
-  "version": "1.0.51",
+  "version": "1.0.53",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -38,6 +38,7 @@
     "vitest": "^4.0.16"
   },
   "dependencies": {
+    "@not251/not251": "file:../not251",
     "framer-motion": "^12.23.26",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

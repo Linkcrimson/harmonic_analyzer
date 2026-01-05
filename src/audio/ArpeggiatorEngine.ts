@@ -1,6 +1,6 @@
 import { audioEngine } from './AudioEngine';
 import { OscillatorType } from './SynthVoice';
-import { positionVector } from '../../not251/src/positionVector';
+import { positionVector } from '@not251/not251';
 
 export type ArpPattern = 'up' | 'down' | 'updown' | 'random';
 export type ArpSortMode = 'pitch' | 'harmonic';

@@ -1,6 +1,5 @@
 /* eslint-disable no-restricted-globals */
-import { positionVector, inverse_select } from '../../not251/src/positionVector';
-import { getChordName, spellingNotes } from '../../not251/src/chord';
+import { positionVector, inverse_select, getChordName, spellingNotes } from '@not251/not251';
 
 // Define the interface for the message received from the main thread
 interface AnalysisRequest {
