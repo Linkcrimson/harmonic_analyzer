@@ -110,56 +110,71 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
         }
 
         const newIntervals = new Map<number, string>();
-        const rootPitchClass = root.data[0];
 
-        const mapInterval = (semitones: number[], type: string) => {
-            sortedNotes.forEach(noteId => {
-                const notePitchClass = modulo(noteId, 12);
-                const interval = modulo(notePitchClass - rootPitchClass, 12);
-                if (semitones.includes(interval)) newIntervals.set(noteId, type);
-            });
-        };
+        // Use the native noteRoles from not251
+        // Mapping not251 internal roles to WebApp UI roles:
+        // root -> root
+        // 3maj, 3min, 3dim, 3aug, 2, 4 (sus) -> third
+        // 5, 5dim, 5aug -> fifth
+        // 7maj, 7min, 6, 7dim -> seventh
+        // everything else -> ext (or specific extension name if WebApp handles it)
 
-        sortedNotes.forEach(n => newIntervals.set(n, 'ext'));
-        mapInterval([0], 'root');
+        // Actually, the WebApp seems to use specific keys like 'b9', '#11' in mapExtension calls below.
+        // Let's preserve that granularity but use the source of truth from not251.
 
-        const { thirdQuality, fifthQuality, seventhQuality } = detailedAnalysis;
+        // DEBUGGING LOGS
+        console.log("Worker Analysis Option:", selected);
+        console.log("Worker noteRoles:", selected.noteRoles);
 
-        if (thirdQuality === "Maggiore") mapInterval([4], 'third');
-        else if (thirdQuality === "Minore") mapInterval([3], 'third');
-        else if (thirdQuality === "Sus 2") mapInterval([2], 'third');
-        else if (thirdQuality === "Sus 4") mapInterval([5], 'third');
+        const roles = Array.from(selected.noteRoles?.values() || []) as string[];
+        const hasSeventh = roles.some(r => ['7maj', '7min', '7dim'].includes(r));
+        const thirdQuality = selected.detailedAnalysis?.thirdQuality;
 
-        if (fifthQuality === "Giusta") mapInterval([7], 'fifth');
-        else if (fifthQuality === "Aumentata") mapInterval([8], 'fifth');
-        else if (fifthQuality === "Diminuita") mapInterval([6], 'fifth');
+        selected.noteRoles?.forEach((role: string, noteId: number) => {
+            console.log(`Mapping Note ${noteId} -> ${role}`);
+            let uiRole = 'ext';
 
-        if (seventhQuality === "Mag 7") mapInterval([11], 'seventh');
-        else if (seventhQuality === "Min 7") mapInterval([10], 'seventh');
-        else if (seventhQuality === "Sesta/Dim") mapInterval([9], 'seventh');
+            if (role === 'root') uiRole = 'root';
+            // Thirds
+            else if (['3maj', '3min', '3dim', '3aug'].includes(role)) {
+                uiRole = 'third';
+            }
+            // Sus vs Extension
+            else if (role === '2') {
+                if (thirdQuality === 'Sus 2') uiRole = 'third';
+                else uiRole = '9';
+            }
+            else if (role === '4') {
+                if (thirdQuality === 'Sus 4') uiRole = 'third';
+                else uiRole = '11';
+            }
+            else if (['5', '5dim', '5aug'].includes(role)) uiRole = 'fifth';
+            else if (['7maj', '7min', '7dim'].includes(role)) uiRole = 'seventh';
+            else if (role === '6') {
+                // Contextual mapping for 6th:
+                // If a 7th is present, the 6th is an extension (13th).
+                // If no 7th is present, the 6th acts as the "seventh" function (e.g. C6).
+                uiRole = hasSeventh ? '13' : 'seventh';
+            }
+            // Explicit Extension Mapping (Theoretical -> Jazz UI)
+            else if (role === '2min') uiRole = 'b9';
+            else if (role === '2aug') uiRole = '#9';
+            else if (role === '4aug') uiRole = '#11';
+            else if (role === '6min') uiRole = 'b13';
+            else if (role === '6aug') uiRole = '#13';
 
-        // Map extensions ONLY if still marked as 'ext' (prevents overwriting chord tones)
-        const mapExtension = (semitones: number[], type: string) => {
-            sortedNotes.forEach(noteId => {
-                const notePitchClass = modulo(noteId, 12);
-                const interval = modulo(notePitchClass - rootPitchClass, 12);
-                if (semitones.includes(interval) && newIntervals.get(noteId) === 'ext') {
-                    newIntervals.set(noteId, type);
-                }
-            });
-        };
+            else {
+                // For extensions, pass the specific role (e.g., 'b9', '13', etc.)
+                // The UI likely expects these specific strings for tooltips/display
+                uiRole = role;
+            }
+            newIntervals.set(noteId, uiRole);
+        });
 
-        // 2nd/9th family (intervals 1, 2, 3)
-        mapExtension([1], 'b9');
-        mapExtension([2], '9');
-        mapExtension([3], '#9');
-        // 4th/11th family (intervals 5, 6)  
-        mapExtension([5], '11');
-        mapExtension([6], '#11');
-        // 6th/13th family (intervals 8, 9, 10)
-        mapExtension([8], 'b13');
-        mapExtension([9], '13');
-        mapExtension([10], '#13');
+        // Ensure all active notes have at least a default role if not found (shouldn't happen with correct logic)
+        sortedNotes.forEach(n => {
+            if (!newIntervals.has(n)) newIntervals.set(n, 'ext');
+        });
 
         const intervalValues = Array.from(newIntervals.values());
 

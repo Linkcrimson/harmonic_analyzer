@@ -51,7 +51,7 @@ export class ArpeggiatorEngine {
         if (['7', 'b7', 'bb7', 'maj7', 'seventh'].includes(intervalName)) return '7th';
         if (['9', 'b9', '#9'].includes(intervalName)) return '9th';
         if (['11', '#11'].includes(intervalName)) return '11th';
-        if (['13', 'b13'].includes(intervalName)) return '13th';
+        if (['13', 'b13', '#13'].includes(intervalName)) return '13th';
         return 'root'; // Fallback
     }
 
