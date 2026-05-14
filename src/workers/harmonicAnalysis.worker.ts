@@ -71,18 +71,7 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
     const sortedNotes = Array.from(notes).sort((a, b) => a - b);
     const chordVec = new PositionVector(sortedNotes, 12, 12).normalize('min', true);
 
-    let names: string[] = [];
-    try {
-        names = spellingNotes(chordVec, true, false, useEnharmonic, 0);
-    } catch (e) {
-        console.error(e);
-    }
-
     const newNoteNames = new Map<number, string>();
-    sortedNotes.forEach((noteId, index) => {
-        if (names[index]) newNoteNames.set(noteId, names[index]);
-    });
-
     let options: any[] = [];
     try {
         const res = analyzeChord(chordVec, !bassAsRoot);
