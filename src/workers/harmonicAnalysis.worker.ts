@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-globals */
-import { positionVector, inverse_select, getChordName, spellingNotes } from '@not251/not251';
+import { PositionVector, analyzeChord, spellingNotes, role } from '@alchemusa/core';
 
 // Define the interface for the message received from the main thread
 interface AnalysisRequest {
@@ -69,11 +69,11 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
     }
 
     const sortedNotes = Array.from(notes).sort((a, b) => a - b);
-    const chordVec = new positionVector(sortedNotes, 12, 12).normalizeToModulo();
+    const chordVec = new PositionVector(sortedNotes, 12, 12).normalize('min', true);
 
     let names: string[] = [];
     try {
-        names = spellingNotes(chordVec, true, false, useEnharmonic, false);
+        names = spellingNotes(chordVec, true, false, useEnharmonic, 0);
     } catch (e) {
         console.error(e);
     }
@@ -85,21 +85,23 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
 
     let options: any[] = [];
     try {
-        const res = getChordName(chordVec, !bassAsRoot);
+        const res = analyzeChord(chordVec, !bassAsRoot);
         options = res.options;
     } catch (e) {
         console.error(e);
     }
 
+    const modulo = (n: number, m: number) => ((n % m) + m) % m;
+
     if (options.length > 0 && options[selectedIndex]) {
         const selected = options[selectedIndex];
-        const { root, components, detailedAnalysis } = selected;
+        // In Alchemusa ChordCandidate, properties are top-level
+        const { rootName, quality, base, inversion, detailedAnalysis } = selected;
 
-        const rootIndex = inverse_select(root, chordVec).data[0];
-        const rotatedVec = chordVec.rototranslate(rootIndex, chordVec.data.length, false);
-        const rotatedNames = spellingNotes(rotatedVec, true, false, useEnharmonic, false);
+        const rootIndex = chordVec.findIndices(selected.root).data[0] || 0;
+        const rotatedVec = chordVec.rotate(rootIndex, chordVec.data.length, false);
+        const rotatedNames = spellingNotes(rotatedVec, true, false, useEnharmonic, 0);
 
-        const modulo = (n: number, m: number) => ((n % m) + m) % m;
         for (let i = 0; i < rotatedNames.length; i++) {
             const targetPitchClass = modulo(rotatedVec.data[i], 12);
             sortedNotes.forEach(noteId => {
@@ -111,69 +113,43 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
 
         const newIntervals = new Map<number, string>();
 
-        // Use the native noteRoles from not251
-        // Mapping not251 internal roles to WebApp UI roles:
-        // root -> root
-        // 3maj, 3min, 3dim, 3aug, 2, 4 (sus) -> third
-        // 5, 5dim, 5aug -> fifth
-        // 7maj, 7min, 6, 7dim -> seventh
-        // everything else -> ext (or specific extension name if WebApp handles it)
-
-        // Actually, the WebApp seems to use specific keys like 'b9', '#11' in mapExtension calls below.
-        // Let's preserve that granularity but use the source of truth from not251.
-
-        // DEBUGGING LOGS
-        console.log("Worker Analysis Option:", selected);
-        console.log("Worker noteRoles:", selected.noteRoles);
-
-        const roles = Array.from(selected.noteRoles?.values() || []) as string[];
-        const hasSeventh = roles.some(r => ['7maj', '7min', '7dim'].includes(r));
+        const rolesList = Array.from(selected.noteRoles?.values() || []) as number[];
+        const hasSeventh = rolesList.some(r => [role.i7.major, role.i7.minor, role.i7.diminished].includes(r as any));
         const thirdQuality = selected.detailedAnalysis?.thirdQuality;
+        
+        const roleByPitchClass = new Map<number, string>();
 
-        selected.noteRoles?.forEach((role: string, noteId: number) => {
-            console.log(`Mapping Note ${noteId} -> ${role}`);
+        selected.noteRoles?.forEach((roleId: number, noteId: number) => {
             let uiRole = 'ext';
 
-            if (role === 'root') uiRole = 'root';
-            // Thirds
-            else if (['3maj', '3min', '3dim', '3aug'].includes(role)) {
-                uiRole = 'third';
-            }
-            // Sus vs Extension
-            else if (role === '2') {
-                if (thirdQuality === 'Sus 2') uiRole = 'third';
-                else uiRole = '9';
-            }
-            else if (role === '4') {
-                if (thirdQuality === 'Sus 4') uiRole = 'third';
-                else uiRole = '11';
-            }
-            else if (['5', '5dim', '5aug'].includes(role)) uiRole = 'fifth';
-            else if (['7maj', '7min', '7dim'].includes(role)) uiRole = 'seventh';
-            else if (role === '6') {
-                // Contextual mapping for 6th:
-                // If a 7th is present, the 6th is an extension (13th).
-                // If no 7th is present, the 6th acts as the "seventh" function (e.g. C6).
-                uiRole = hasSeventh ? '13' : 'seventh';
-            }
-            // Explicit Extension Mapping (Theoretical -> Jazz UI)
-            else if (role === '2min') uiRole = 'b9';
-            else if (role === '2aug') uiRole = '#9';
-            else if (role === '4aug') uiRole = '#11';
-            else if (role === '6min') uiRole = 'b13';
-            else if (role === '6aug') uiRole = '#13';
-
-            else {
-                // For extensions, pass the specific role (e.g., 'b9', '13', etc.)
-                // The UI likely expects these specific strings for tooltips/display
-                uiRole = role;
-            }
-            newIntervals.set(noteId, uiRole);
+            if (roleId === role.i1) uiRole = 'root';
+            else if ([role.i3.major, role.i3.minor, role.i3.diminished, role.i3.augmented].includes(roleId as any)) uiRole = 'third';
+            else if (roleId === role.i2.major) uiRole = thirdQuality === 'Sus 2' ? 'third' : '9';
+            else if (roleId === role.i4.perfect) uiRole = thirdQuality === 'Sus 4' ? 'third' : '11';
+            else if ([role.i5.perfect, role.i5.diminished, role.i5.augmented].includes(roleId as any)) uiRole = 'fifth';
+            else if ([role.i7.major, role.i7.minor, role.i7.diminished].includes(roleId as any)) uiRole = 'seventh';
+            else if (roleId === role.i6.major) uiRole = hasSeventh ? '13' : 'seventh';
+            else if (roleId === role.i2.minor) uiRole = 'b9';
+            else if (roleId === role.i2.augmented) uiRole = '#9';
+            else if (roleId === role.i4.augmented) uiRole = '#11';
+            else if (roleId === role.i6.minor) uiRole = 'b13';
+            else if (roleId === role.i6.augmented) uiRole = '#13';
+            else if (roleId === role.i9.major) uiRole = '9';
+            else if (roleId === role.i9.minor) uiRole = 'b9';
+            else if (roleId === role.i9.augmented) uiRole = '#9';
+            else if (roleId === role.i11.perfect) uiRole = '11';
+            else if (roleId === role.i11.augmented) uiRole = '#11';
+            else if (roleId === role.i13.major) uiRole = '13';
+            else if (roleId === role.i13.minor) uiRole = 'b13';
+            
+            roleByPitchClass.set(modulo(noteId, 12), uiRole);
         });
 
-        // Ensure all active notes have at least a default role if not found (shouldn't happen with correct logic)
+        // Propagate roles to all octaves of the same pitch class
         sortedNotes.forEach(n => {
-            if (!newIntervals.has(n)) newIntervals.set(n, 'ext');
+            const pc = modulo(n, 12);
+            const uiRole = roleByPitchClass.get(pc) || 'ext';
+            newIntervals.set(n, uiRole);
         });
 
         const intervalValues = Array.from(newIntervals.values());
@@ -181,7 +157,7 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
         const response = {
             chordOptions: options,
             analysis: {
-                rootName: components.rootName,
+                rootName: rootName,
                 quality: detailedAnalysis.thirdQuality,
                 stability: detailedAnalysis.fifthQuality,
                 function: detailedAnalysis.seventhQuality,
@@ -203,6 +179,7 @@ self.onmessage = (e: MessageEvent<AnalysisRequest>) => {
         sortedNotes.forEach(n => fallbackIntervals.set(n, 'active'));
 
         const response = {
+            requestId,
             chordOptions: options,
             analysis: {
                 rootName: '--',

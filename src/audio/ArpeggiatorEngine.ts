@@ -1,6 +1,6 @@
 import { audioEngine } from './AudioEngine';
 import { OscillatorType } from './SynthVoice';
-import { positionVector } from '@not251/not251';
+import { PositionVector } from '@alchemusa/core';
 
 export type ArpPattern = 'up' | 'down' | 'updown' | 'random';
 export type ArpSortMode = 'pitch' | 'harmonic';
@@ -22,7 +22,7 @@ export class ArpeggiatorEngine {
 
     // Core data structures
     private sortedNotes: number[] = [];  // Notes sorted by current mode (harmonic order or pitch)
-    private notePositions: positionVector | null = null;  // Position vector for ID-based manipulation
+    private notePositions: PositionVector | null = null;  // Position vector for ID-based manipulation
 
     private notes: number[] = []; // Final expanded note sequence for playback
     private baseNotes: number[] = []; // Original notes from the chord
@@ -110,8 +110,8 @@ export class ArpeggiatorEngine {
     }
 
     /**
-     * Sorts notes and assigns progressive IDs (0, 1, 2, ...) to create a positionVector.
-     * The positionVector enables mathematical operations on note positions.
+     * Sorts notes and assigns progressive IDs (0, 1, 2, ...) to create a PositionVector.
+     * The PositionVector enables mathematical operations on note positions.
      */
     private buildPositionVector() {
         const uniqueNotes = [...new Set(this.baseNotes)];
@@ -176,7 +176,7 @@ export class ArpeggiatorEngine {
 
                 // Recalculate IDs for position vector
                 const ids = Array.from({ length: this.sortedNotes.length }, (_, i) => i);
-                this.notePositions = new positionVector(ids, this.sortedNotes.length, this.sortedNotes.length);
+                this.notePositions = new PositionVector(ids, this.sortedNotes.length, this.sortedNotes.length);
                 return; // Early return as we handled it
             }
         } else {
@@ -189,12 +189,12 @@ export class ArpeggiatorEngine {
         // Create position vector with progressive IDs [0, 1, 2, ...]
         // modulo = span = length of notes (so element(i) cycles through IDs)
         const ids = Array.from({ length: uniqueNotes.length }, (_, i) => i);
-        this.notePositions = new positionVector(ids, uniqueNotes.length, uniqueNotes.length);
+        this.notePositions = new PositionVector(ids, uniqueNotes.length, uniqueNotes.length);
     }
 
     /**
-     * Builds the final note sequence for playback using the positionVector.
-     * Uses positionVector.element() for cyclic octave expansion.
+     * Builds the final note sequence for playback using the PositionVector.
+     * Uses PositionVector.element() for cyclic octave expansion.
      */
     private buildSequence() {
         if (!this.notePositions || this.sortedNotes.length === 0) {

@@ -4,6 +4,11 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import packageJson from './package.json'
 
+import { fileURLToPath } from 'url'
+import path from 'path'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
 // https://vite.dev/config/
 export default defineConfig({
     plugins: [
@@ -33,12 +38,22 @@ export default defineConfig({
             }
         })
     ],
+    resolve: {
+        alias: {
+            '@alchemusa/core': path.resolve(__dirname, '../Alchemusa_new/src/index.ts')
+        },
+        extensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
+    },
+
     define: {
         '__APP_VERSION__': JSON.stringify(packageJson.version),
     },
     base: './', // Ensure relative paths for GitHub Pages
     server: {
-        host: true // Enable network access for mobile testing
+        host: true, // Enable network access for mobile testing
+        fs: {
+            allow: ['..']
+        }
     },
     build: {
         outDir: 'docs' // Build to docs folder for GitHub Pages

@@ -12,9 +12,11 @@ export const ChordSymbol: React.FC<ChordSymbolProps> = ({ option, className = ""
 
     if (!option) return <span>--</span>;
 
-    const { components } = option;
-    const { rootName, quality } = components;
-    let { base } = components;
+    // Alchemusa ChordCandidate has flat structure. Fallback to legacy 'components' if needed.
+    const rootName = option.rootName || option.components?.rootName;
+    const quality = option.quality || option.components?.quality || [];
+    let base = option.base || option.components?.base || "";
+    const inversion = option.inversion || option.components?.inversion || "";
 
     // Apply formatting to Base
     // We treat base as a partial chord name for replacement purposes
@@ -125,7 +127,7 @@ export const ChordSymbol: React.FC<ChordSymbolProps> = ({ option, className = ""
             </span>
             {/* Inversion - keep it outside the superscript if it should be baseline, or inside if superscript. Usually baseline or slightly subscript. */}
             {/* Let's keep inversion baseline but small */}
-            {renderInversion(components.inversion)}
+            {renderInversion(inversion)}
         </span>
     );
 };

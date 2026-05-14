@@ -20,10 +20,14 @@
         "strict": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "noFallthroughCasesInSwitch": true
+        "noFallthroughCasesInSwitch": true,
+        "baseUrl": ".",
+        "paths": {
+            "@alchemusa/core": ["../Alchemusa_new/src/index.ts"]
+        }
     },
     "include": [
         "src",
-        "not251/src"
+        "../Alchemusa_new/src"
     ]
 }
